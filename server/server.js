@@ -18,11 +18,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
 const adminRoutes = require('./routes/admin');
+const applicationRoutes = require('./routes/applications');
 
 // Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // Root route for sanity check
 app.get('/api/health', (req, res) => {

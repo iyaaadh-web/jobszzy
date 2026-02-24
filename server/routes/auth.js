@@ -157,4 +157,19 @@ router.get('/talent', require('../middleware/auth').verifyToken, require('../mid
     });
 });
 
+// Update Profile
+router.put('/profile', verifyToken, (req, res) => {
+    const { name, logo_url, cv_url } = req.body;
+    const userId = req.user.id;
+
+    db.run(
+        `UPDATE users SET name = COALESCE(?, name), logo_url = COALESCE(?, logo_url), cv_url = COALESCE(?, cv_url) WHERE id = ?`,
+        [name, logo_url, cv_url, userId],
+        function (err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json({ message: 'Profile updated successfully' });
+        }
+    );
+});
+
 module.exports = router;

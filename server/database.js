@@ -36,6 +36,19 @@ const db = new sqlite3.Database(dbPath, (err) => {
         FOREIGN KEY (employer_id) REFERENCES users(id) ON DELETE CASCADE
       )`);
 
+            // Create Applications table
+            db.run(`CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER NOT NULL,
+        seeker_id INTEGER NOT NULL,
+        status TEXT DEFAULT 'pending', -- 'pending', 'reviewed', 'shortlisted', 'rejected'
+        applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        cover_letter TEXT,
+        cv_url TEXT, -- Seeker's CV at the time of application
+        FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+        FOREIGN KEY (seeker_id) REFERENCES users(id) ON DELETE CASCADE
+      )`);
+
             // Seed Admin (Requested: sales@fasmala.com / Idhu@0412.)
             db.get(`SELECT * FROM users WHERE role = 'admin'`, [], async (err, row) => {
                 const salt = await bcrypt.genSalt(10);
