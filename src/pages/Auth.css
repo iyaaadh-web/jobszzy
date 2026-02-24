@@ -16,6 +16,16 @@
     box-shadow: var(--shadow-card);
 }
 
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 1.5rem;
+    }
+
+    .auth-title {
+        font-size: 1.75rem;
+    }
+}
+
 .auth-title {
     font-size: 2rem;
     font-weight: 700;

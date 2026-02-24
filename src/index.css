@@ -18,6 +18,13 @@
   --radius-full: 9999px;
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+  --container-padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 1rem;
+  }
 }
 
 * {
@@ -69,7 +76,7 @@ button {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 var(--container-padding);
 }
 
 .btn-primary {

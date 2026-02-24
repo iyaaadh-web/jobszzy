@@ -12,15 +12,6 @@ I have implemented several critical fixes to resolve the login and registration 
 ### Update: Express 5 Fix
 - Fixed a startup crash caused by the wildcard route `*`. In Express 5, this must be handled carefully. I have reverted to the standard catch-all which should now work with your service setup. This resolves the 502 Bad Gateway.
 
-## Final Deployment Command
-
-To fix the crash and ensure the server is in **Production Mode**, run these two commands in your terminal:
-
-```powershell
-# 1. Upload the fix
-scp server/server.js root@31.97.230.99:/var/www/jobszzy/server/server.js
-
-# 2. Rebuild and restart
 ssh root@31.97.230.99 "cd /var/www/jobszzy ; npm install ; npm run build ; cd server ; npm install ; pm2 restart jobszzy --update-env"
 ```
 

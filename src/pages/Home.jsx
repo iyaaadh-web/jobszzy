@@ -7,10 +7,10 @@ const Home = () => {
         <main>
             <Hero />
 
-            <section className="container" style={{ padding: '4rem 0' }}>
-                <div className="glass" style={{ padding: '3rem', borderRadius: 'var(--radius-lg)' }}>
-                    <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: 'var(--primary)' }}>What Jobszzy Maldives Is</h2>
-                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', fontSize: '1.1rem' }}>
+            <section className="container home-intro-section">
+                <div className="glass home-intro-card">
+                    <h2>What Jobszzy Maldives Is</h2>
+                    <p>
                         Jobszzy Maldives is your gateway to the best career opportunities in the Maldives.
                         Whether you are a job seeker looking for your dream role in tourism and hospitality,
                         or an employer seeking the perfect candidate, we provide the platform to connect you
