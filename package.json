@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "push": "git add . && git commit -m 'Update' && git push origin main",
+    "deploy": "ssh root@31.97.230.99 \"cd /var/www/jobszzy && git pull && npm install && npm run build && pm2 restart jobszzy\""
   },
   "dependencies": {
     "axios": "^1.13.5",
