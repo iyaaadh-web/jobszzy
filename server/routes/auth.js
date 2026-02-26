@@ -158,7 +158,7 @@ router.get('/talent', require('../middleware/auth').verifyToken, require('../mid
 });
 
 // Update Profile
-router.put('/profile', verifyToken, (req, res) => {
+router.put('/profile', require('../middleware/auth').verifyToken, (req, res) => {
     const { name, logo_url, cv_url } = req.body;
     const userId = req.user.id;
 
