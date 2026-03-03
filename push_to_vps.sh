@@ -13,9 +13,11 @@ scp project.tar.gz root@$VPS_IP:$APP_DIR/
 echo "--- 3. Extracting and Restarting on VPS ---"
 ssh root@$VPS_IP "cd $APP_DIR && \
     tar -xzf project.tar.gz && \
+    cp nginx.conf /etc/nginx/sites-available/jobszzy && \
+    ln -sf /etc/nginx/sites-available/jobszzy /etc/nginx/sites-enabled/jobszzy && \
     rm -f /etc/nginx/sites-enabled/default && \
     nginx -t && \
-    systemctl restart nginx && \
+    systemctl reload nginx && \
     npm install && \
     npm run build && \
     cd server && \
