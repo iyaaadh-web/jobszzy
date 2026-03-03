@@ -18,6 +18,8 @@ ssh root@$VPS_IP "cd $APP_DIR && \
     rm -f /etc/nginx/sites-enabled/default && \
     nginx -t && \
     systemctl reload nginx && \
+    chown -R www-data:www-data /var/www/jobszzy && \
+    chmod -R 755 /var/www/jobszzy && \
     npm install && \
     npm run build && \
     cd server && \
