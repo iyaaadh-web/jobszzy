@@ -5,7 +5,7 @@ VPS_IP="31.97.230.99"
 APP_DIR="/var/www/jobszzy"
 
 echo "--- 1. Packaging local changes ---"
-tar -czf project.tar.gz server public src index.html package.json package-lock.json vite.config.js .env.example
+tar -czf project.tar.gz server public src index.html package.json package-lock.json vite.config.js nginx.conf .env.example
 
 echo "--- 2. Uploading to VPS ---"
 scp project.tar.gz root@$VPS_IP:$APP_DIR/
