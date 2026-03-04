@@ -92,8 +92,8 @@ const Checkout = () => {
                         <p style={{ marginBottom: '0.5rem' }}>Please transfer <strong>MVR {plan.price}</strong> to the following account:</p>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                             <p><strong>Bank:</strong> BML (Bank of Maldives)</p>
-                            <p><strong>Account Name:</strong> Jobszzy Global</p>
-                            <p><strong>Account Number:</strong> 77300000XXXXX</p>
+                            <p><strong>Account Name:</strong> Fasmala Consultancy Service</p>
+                            <p><strong>Account Number:</strong> 7730000702588</p>
                         </div>
                     </div>
 
