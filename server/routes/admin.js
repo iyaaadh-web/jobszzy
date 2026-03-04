@@ -43,4 +43,20 @@ router.get('/jobs', (req, res) => {
     });
 });
 
+// Settings Management
+router.get('/settings/:key', (req, res) => {
+    db.get("SELECT value FROM settings WHERE key = ?", [req.params.key], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(row ? JSON.parse(row.value) : null);
+    });
+});
+
+router.post('/settings/:key', (req, res) => {
+    const value = JSON.stringify(req.body);
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", [req.params.key, value], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ message: 'Settings updated successfully' });
+    });
+});
+
 module.exports = router;

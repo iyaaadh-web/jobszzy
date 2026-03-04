@@ -10,8 +10,10 @@ const AdminDashboard = () => {
 
     const [users, setUsers] = useState([]);
     const [jobs, setJobs] = useState([]);
+    const [pricing, setPricing] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('users');
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (!user || user.role !== 'admin') {
@@ -21,12 +23,14 @@ const AdminDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const [usersRes, jobsRes] = await Promise.all([
+                const [usersRes, jobsRes, pricingRes] = await Promise.all([
                     api.get('/admin/users'),
-                    api.get('/admin/jobs')
+                    api.get('/admin/jobs'),
+                    api.get('/admin/settings/pricing_plans')
                 ]);
                 setUsers(usersRes.data);
                 setJobs(jobsRes.data);
+                setPricing(pricingRes.data || []);
             } catch (err) {
                 console.error("Failed to fetch admin data");
             } finally {
@@ -65,6 +69,30 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleSavePricing = async () => {
+        setSaving(true);
+        try {
+            await api.post('/admin/settings/pricing_plans', pricing);
+            alert('Pricing plans updated successfully!');
+        } catch (err) {
+            alert('Failed to update pricing');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updatePricingPlan = (index, field, value) => {
+        const newPricing = [...pricing];
+        newPricing[index] = { ...newPricing[index], [field]: value };
+        setPricing(newPricing);
+    };
+
+    const updatePricingFeatures = (planIndex, featureIndex, value) => {
+        const newPricing = [...pricing];
+        newPricing[planIndex].features[featureIndex] = value;
+        setPricing(newPricing);
+    };
+
     if (loading) return <div className="container dashboard-container">Loading admin panel...</div>;
 
     return (
@@ -86,6 +114,12 @@ const AdminDashboard = () => {
                     onClick={() => setActiveTab('jobs')}
                 >
                     Manage Jobs ({jobs.length})
+                </button>
+                <button
+                    className={`filter-btn ${activeTab === 'pricing' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pricing')}
+                >
+                    Pricing Plans
                 </button>
             </div>
 
@@ -169,6 +203,51 @@ const AdminDashboard = () => {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'pricing' && (
+                    <div className="pricing-settings">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2>Configure Pricing Plans</h2>
+                            <button className="btn-primary" onClick={handleSavePricing} disabled={saving}>
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                            {pricing.map((plan, pIdx) => (
+                                <div key={plan.id} className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <div className="form-group">
+                                        <label>Plan Name</label>
+                                        <input
+                                            type="text"
+                                            value={plan.name}
+                                            onChange={(e) => updatePricingPlan(pIdx, 'name', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Price ($)</label>
+                                        <input
+                                            type="text"
+                                            value={plan.price}
+                                            onChange={(e) => updatePricingPlan(pIdx, 'price', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Features</label>
+                                        {plan.features.map((feat, fIdx) => (
+                                            <input
+                                                key={fIdx}
+                                                type="text"
+                                                value={feat}
+                                                onChange={(e) => updatePricingFeatures(pIdx, fIdx, e.target.value)}
+                                                style={{ marginBottom: '0.5rem' }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

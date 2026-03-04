@@ -76,6 +76,26 @@ db.serialize(() => {
         FOREIGN KEY (seeker_id) REFERENCES users(id) ON DELETE CASCADE
     )`, (err) => { if (err) console.error('Error creating applications table:', err.message); });
 
+    db.run(`CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )`, (err) => {
+        if (err) console.error('Error creating settings table:', err.message);
+        else {
+            // Seed default pricing
+            db.get("SELECT * FROM settings WHERE key = 'pricing_plans'", (err, row) => {
+                if (!row) {
+                    const defaultPlans = [
+                        { id: 'basic', name: 'Basic', price: '0', features: ['1 Job Posting', '30 Days Visibility', 'Standard Support'] },
+                        { id: 'premium', name: 'Premium', price: '99', features: ['5 Job Postings', '60 Days Visibility', 'Priority Support', 'Featured Badge'] },
+                        { id: 'enterprise', name: 'Enterprise', price: '299', features: ['Unlimited Postings', '90 Days Visibility', '24/7 Support', 'Featured Badge', 'Talent Search Access'] }
+                    ];
+                    db.run("INSERT INTO settings (key, value) VALUES (?, ?)", ['pricing_plans', JSON.stringify(defaultPlans)]);
+                }
+            });
+        }
+    });
+
     // 2. Seeding Logic (Robust check)
     // Seed Admin: sales@fasmala.com / Idhu@0412.
     db.get(`SELECT * FROM users WHERE email = ?`, ['sales@fasmala.com'], async (err, row) => {

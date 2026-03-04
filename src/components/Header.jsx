@@ -31,7 +31,10 @@ const Header = () => {
           <nav className="nav-links">
             <Link to="/browse-jobs" onClick={closeMenu}>Find Jobs</Link>
             <Link to="/companies" onClick={closeMenu}>Companies</Link>
-            {user && <Link to="/job-seekers" onClick={closeMenu}>Job Seekers</Link>}
+            {user && (user.role === 'employer' || user.role === 'admin') && (
+              <Link to="/job-seekers" onClick={closeMenu}>Talent Pool</Link>
+            )}
+            <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
           </nav>
           <div className="auth-buttons">
             {user ? (
@@ -39,9 +42,9 @@ const Header = () => {
                 {user.role === 'admin' ? (
                   <Link to="/admin" className="btn-secondary" onClick={closeMenu}>Admin Panel</Link>
                 ) : user.role === 'employer' ? (
-                  <Link to="/employer/dashboard" className="btn-secondary" onClick={closeMenu}>Dashboard</Link>
+                  <Link to="/employer/dashboard" className="btn-secondary" onClick={closeMenu}>Employer Dashboard</Link>
                 ) : (
-                  <Link to="/seeker/dashboard" className="btn-secondary" onClick={closeMenu}>My Profile</Link>
+                  <Link to="/seeker/dashboard" className="btn-secondary" onClick={closeMenu}>My Dashboard</Link>
                 )}
                 <button onClick={() => { handleLogout(); closeMenu(); }} className="btn-primary">Logout</button>
               </>

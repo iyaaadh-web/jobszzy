@@ -7,10 +7,26 @@ const SeekerDashboard = () => {
     const { user, uploadCv } = useContext(AuthContext);
     const [cvFile, setCvFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [applications, setApplications] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
 
     if (!user) return <Navigate to="/login" />;
     if (user.role !== 'seeker') return <Navigate to="/" />;
+
+    const fetchApplications = async () => {
+        try {
+            const res = await api.get('/applications/my-applications');
+            setApplications(res.data);
+        } catch (err) {
+            console.error("Failed to fetch applications");
+        }
+    };
+
+    React.useEffect(() => {
+        if (user && user.role === 'seeker') {
+            fetchApplications();
+        }
+    }, [user]);
 
     const handleUpload = async (e) => {
         e.preventDefault();
@@ -78,6 +94,65 @@ const SeekerDashboard = () => {
                         </div>
                     )}
                 </form>
+            </div>
+
+            <div className="dashboard-grid" style={{ marginTop: '2rem' }}>
+                <div className="dashboard-main glass">
+                    <h2>My Applications</h2>
+                    {applications.length === 0 ? (
+                        <p className="no-data">You haven't applied for any jobs yet.</p>
+                    ) : (
+                        <div className="admin-table-container">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Company</th>
+                                        <th>Applied Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {applications.map(app => (
+                                        <tr key={app.id}>
+                                            <td><strong>{app.title}</strong></td>
+                                            <td>{app.company}</td>
+                                            <td>{new Date(app.applied_at).toLocaleDateString()}</td>
+                                            <td>
+                                                <span className={`role-badge status-${app.status || 'pending'}`} style={{
+                                                    background: app.status === 'shortlisted' ? 'rgba(16, 185, 129, 0.1)' :
+                                                        app.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' :
+                                                            'rgba(59, 130, 246, 0.1)',
+                                                    color: app.status === 'shortlisted' ? '#10b981' :
+                                                        app.status === 'rejected' ? '#ef4444' :
+                                                            '#3b82f6'
+                                                }}>
+                                                    {app.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="sidebar-widget glass">
+                    <h3>Quick Stats</h3>
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                        <div className="glass" style={{ padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--accent)' }}>{applications.length}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Applications</div>
+                        </div>
+                        <div className="glass" style={{ padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981' }}>
+                                {applications.filter(a => a.status === 'shortlisted').length}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Shortlisted</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -5,8 +5,11 @@ import './JobDetails.css';
 
 const JobDetails = () => {
     const { id } = useParams();
+    const { user } = useContext(AuthContext);
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [applying, setApplying] = useState(false);
+    const [applySuccess, setApplySuccess] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -22,6 +25,31 @@ const JobDetails = () => {
         };
         fetchJob();
     }, [id]);
+
+    const handleApply = async () => {
+        if (!user) {
+            alert('Please log in to apply for this job.');
+            return;
+        }
+        if (user.role !== 'seeker') {
+            alert('Only job seekers can apply for jobs.');
+            return;
+        }
+        if (!user.cv_url) {
+            alert('Please upload your CV in your dashboard before applying.');
+            return;
+        }
+
+        setApplying(true);
+        try {
+            await api.post('/applications', { job_id: id });
+            setApplySuccess(true);
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to submit application');
+        } finally {
+            setApplying(false);
+        }
+    };
 
     if (loading) return <div className="container" style={{ paddingTop: '120px', textAlign: 'center' }}>Loading job details...</div>;
     if (error) return <div className="container" style={{ paddingTop: '120px', textAlign: 'center', color: '#fca5a5' }}>{error}</div>;
@@ -45,7 +73,15 @@ const JobDetails = () => {
                             <p className="job-details-company-name">{job.company}</p>
                         </div>
                     </div>
-                    <button className="btn-primary apply-btn-large">Apply Now</button>
+                    {applySuccess ? (
+                        <div className="badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '1rem', fontSize: '1rem' }}>
+                            Application Submitted!
+                        </div>
+                    ) : (
+                        <button className="btn-primary apply-btn-large" onClick={handleApply} disabled={applying}>
+                            {applying ? 'Applying...' : 'Apply Now'}
+                        </button>
+                    )}
                 </div>
 
                 <div className="job-meta-grid">
@@ -97,7 +133,13 @@ const JobDetails = () => {
                     <div className="sidebar-card glass">
                         <h3>About the Company</h3>
                         <p>Ready to join {job.company}? Apply today to take the next step in your career.</p>
-                        <button className="btn-primary w-full mt-4">Apply Now</button>
+                        {applySuccess ? (
+                            <p className="mt-4" style={{ color: '#10b981', fontWeight: 'bold' }}>Success! Your application is in.</p>
+                        ) : (
+                            <button className="btn-primary w-full mt-4" onClick={handleApply} disabled={applying}>
+                                {applying ? 'Applying...' : 'Apply Now'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
