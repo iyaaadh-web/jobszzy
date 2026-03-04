@@ -48,6 +48,8 @@ const Header = () => {
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const isProfessional = user && (user.role === 'employer' || user.role === 'admin');
+  const isAdmin = user && user.role === 'admin';
 
   return (
     <header className="header glass">
@@ -64,7 +66,7 @@ const Header = () => {
           <nav className="nav-links">
             <Link to="/browse-jobs" onClick={closeMenu}>Find Jobs</Link>
             <Link to="/companies" onClick={closeMenu}>Companies</Link>
-            {user && (user.role === 'employer' || user.role === 'admin') && (
+            {isProfessional && (
               <Link to="/job-seekers" onClick={closeMenu}>Talent Pool</Link>
             )}
             <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
@@ -127,11 +129,13 @@ const Header = () => {
                   )}
                 </div>
 
-                {user.role === 'admin' ? (
+                {isAdmin && (
                   <Link to="/admin" className="btn-secondary" onClick={() => { closeMenu(); setShowNotifications(false); }}>Admin Panel</Link>
-                ) : user.role === 'employer' ? (
+                )}
+                {isProfessional && (
                   <Link to="/employer/dashboard" className="btn-secondary" onClick={() => { closeMenu(); setShowNotifications(false); }}>Employer Dashboard</Link>
-                ) : (
+                )}
+                {user.role === 'seeker' && (
                   <Link to="/seeker/dashboard" className="btn-secondary" onClick={() => { closeMenu(); setShowNotifications(false); }}>My Dashboard</Link>
                 )}
                 <button onClick={() => { handleLogout(); closeMenu(); setShowNotifications(false); }} className="btn-primary">Logout</button>

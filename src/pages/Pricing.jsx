@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Pricing = () => {
+    const { user, setUser } = useContext(AuthContext);
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [message, setMessage] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchPricing = async () => {
@@ -19,11 +24,42 @@ const Pricing = () => {
         fetchPricing();
     }, []);
 
+    const handleChoosePlan = async (planId) => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        setSubmitting(true);
+        setMessage(null);
+        try {
+            const res = await api.post('/auth/subscribe', { plan_id: planId });
+            setMessage({ type: 'success', text: res.data.message });
+
+            // Update local user state
+            const updatedUser = { ...user, plan_id: planId, subscription_status: res.data.status };
+            setUser(updatedUser);
+
+            if (res.data.status === 'pending') {
+                setTimeout(() => navigate('/employer/dashboard'), 2000);
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to select plan' });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <div className="container" style={{ paddingTop: '120px', paddingBottom: '60px', minHeight: 'calc(100vh - 80px)' }}>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Pricing Plans</h1>
                 <p style={{ color: 'var(--text-secondary)' }}>Simple, transparent pricing for teams of all sizes.</p>
+                {message && (
+                    <div className={`alert ${message.type}`} style={{ maxWidth: '600px', margin: '1rem auto' }}>
+                        {message.text}
+                    </div>
+                )}
             </div>
 
             {loading ? (
@@ -34,8 +70,8 @@ const Pricing = () => {
                         <div key={plan.id} className="glass card-hover" style={{ padding: '2.5rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{plan.name}</h3>
                             <div style={{ marginBottom: '2rem' }}>
-                                <span style={{ fontSize: '3rem', fontWeight: '800' }}>${plan.price}</span>
-                                <span style={{ color: 'var(--text-secondary)' }}>/month</span>
+                                <span style={{ fontSize: '3rem', fontWeight: '800' }}>{plan.price}</span>
+                                <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>MVR /month</span>
                             </div>
                             <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem', textAlign: 'left', flex: 1 }}>
                                 {plan.features.map((feature, idx) => (
@@ -45,7 +81,16 @@ const Pricing = () => {
                                     </li>
                                 ))}
                             </ul>
-                            <button className="btn-primary" style={{ width: '100%' }}>Choose {plan.name}</button>
+                            <button
+                                className="btn-primary"
+                                style={{ width: '100%' }}
+                                onClick={() => handleChoosePlan(plan.id)}
+                                disabled={submitting || (user?.plan_id === plan.id && user?.subscription_status === 'active')}
+                            >
+                                {user?.plan_id === plan.id ?
+                                    (user.subscription_status === 'active' ? 'Current Plan' : 'Pending Approval')
+                                    : `Choose ${plan.name}`}
+                            </button>
                         </div>
                     ))}
                 </div>

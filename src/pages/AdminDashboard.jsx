@@ -11,9 +11,11 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
     const [jobs, setJobs] = useState([]);
     const [pricing, setPricing] = useState([]);
+    const [pendingPayments, setPendingPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('users');
     const [saving, setSaving] = useState(false);
+    const [approving, setApproving] = useState(null);
 
     useEffect(() => {
         if (!user || user.role !== 'admin') {
@@ -23,14 +25,16 @@ const AdminDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const [usersRes, jobsRes, pricingRes] = await Promise.all([
+                const [usersRes, jobsRes, pricingRes, pendingRes] = await Promise.all([
                     api.get('/admin/users'),
                     api.get('/admin/jobs'),
-                    api.get('/admin/settings/pricing_plans')
+                    api.get('/admin/settings/pricing_plans'),
+                    api.get('/admin/subscriptions/pending')
                 ]);
                 setUsers(usersRes.data);
                 setJobs(jobsRes.data);
                 setPricing(pricingRes.data || []);
+                setPendingPayments(pendingRes.data || []);
             } catch (err) {
                 console.error("Failed to fetch admin data");
             } finally {
@@ -93,6 +97,21 @@ const AdminDashboard = () => {
         setPricing(newPricing);
     };
 
+    const handleApprovePayment = async (userId) => {
+        setApproving(userId);
+        try {
+            await api.put(`/admin/subscriptions/${userId}/approve`);
+            setPendingPayments(pendingPayments.filter(p => p.id !== userId));
+            // Update user in the local users list if they are there
+            setUsers(users.map(u => u.id === userId ? { ...u, subscription_status: 'active' } : u));
+            alert('Subscription approved successfully!');
+        } catch (err) {
+            alert('Failed to approve subscription');
+        } finally {
+            setApproving(null);
+        }
+    };
+
     if (loading) return <div className="container dashboard-container">Loading admin panel...</div>;
 
     return (
@@ -120,6 +139,14 @@ const AdminDashboard = () => {
                     onClick={() => setActiveTab('pricing')}
                 >
                     Pricing Plans
+                </button>
+                <button
+                    className={`filter-btn ${activeTab === 'approvals' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('approvals')}
+                    style={{ position: 'relative' }}
+                >
+                    Approvals ({pendingPayments.length})
+                    {pendingPayments.length > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '10px' }}>!</span>}
                 </button>
             </div>
 
@@ -227,7 +254,7 @@ const AdminDashboard = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Price ($)</label>
+                                        <label>Price (MVR)</label>
                                         <input
                                             type="text"
                                             value={plan.price}
@@ -249,6 +276,49 @@ const AdminDashboard = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'approvals' && (
+                    <div>
+                        <h2>Pending Payment Approvals</h2>
+                        {pendingPayments.length === 0 ? (
+                            <p className="no-data" style={{ textAlign: 'center', padding: '3rem' }}>No pending payments to review.</p>
+                        ) : (
+                            <div className="admin-table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name / Company</th>
+                                            <th>Email</th>
+                                            <th>Plan Selected</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pendingPayments.map(p => (
+                                            <tr key={p.id}>
+                                                <td>#{p.id}</td>
+                                                <td>{p.name}</td>
+                                                <td>{p.email}</td>
+                                                <td><span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', textTransform: 'uppercase', fontSize: '0.75rem' }}>{p.plan_id}</span></td>
+                                                <td>
+                                                    <button
+                                                        onClick={() => handleApprovePayment(p.id)}
+                                                        className="btn-primary"
+                                                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                                                        disabled={approving === p.id}
+                                                    >
+                                                        {approving === p.id ? '...' : 'Approve Access'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

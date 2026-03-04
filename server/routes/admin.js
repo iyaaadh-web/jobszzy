@@ -59,4 +59,26 @@ router.post('/settings/:key', (req, res) => {
     });
 });
 
+// Get pending subscriptions
+router.get('/subscriptions/pending', (req, res) => {
+    db.all(`SELECT id, name, email, plan_id, subscription_status FROM users WHERE subscription_status = 'pending'`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
+});
+
+// Approve a subscription
+router.put('/subscriptions/:id/approve', (req, res) => {
+    const userId = req.params.id;
+    db.run(`UPDATE users SET subscription_status = 'active' WHERE id = ?`, [userId], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+
+        // Notify user
+        const message = "Your subscription has been approved! You now have full access to the portal.";
+        db.run('INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)', [userId, message, 'subscription']);
+
+        res.json({ message: 'Subscription approved successfully' });
+    });
+});
+
 module.exports = router;

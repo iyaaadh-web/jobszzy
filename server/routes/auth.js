@@ -135,7 +135,7 @@ router.post('/reset-password', async (req, res) => {
 
 // Get current user details from token
 router.get('/me', require('../middleware/auth').verifyToken, (req, res) => {
-    db.get(`SELECT id, name, email, role, logo_url, cv_url, bio, skills FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+    db.get(`SELECT id, name, email, role, logo_url, cv_url, bio, skills, plan_id, subscription_status FROM users WHERE id = ?`, [req.user.id], (err, user) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
@@ -207,6 +207,48 @@ router.put('/profile', require('../middleware/auth').verifyToken, (req, res) => 
             res.json({ message: 'Profile updated successfully' });
         }
     );
+});
+
+// Subscribe to a plan
+router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) => {
+    const { plan_id } = req.body;
+    const userId = req.user.id;
+
+    if (!['basic', 'premium', 'enterprise'].includes(plan_id)) {
+        return res.status(400).json({ error: 'Invalid plan selected' });
+    }
+
+    // Basic is instant, others are pending
+    const status = plan_id === 'basic' ? 'active' : 'pending';
+
+    db.run(
+        `UPDATE users SET plan_id = ?, subscription_status = ? WHERE id = ?`,
+        [plan_id, status, userId],
+        function (err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json({ message: `Plan ${plan_id} selected successfully`, plan_id, status });
+        }
+    );
+});
+
+// Confirm Payment
+router.post('/confirm-payment', require('../middleware/auth').verifyToken, (req, res) => {
+    const { paymentDetails } = req.body;
+    const userId = req.user.id;
+
+    const message = `Payment confirmation submitted by ${req.user.email}. Details: ${paymentDetails}`;
+
+    // Notify admin
+    db.get('SELECT id FROM users WHERE role = "admin" LIMIT 1', (err, admin) => {
+        if (!err && admin) {
+            db.run(
+                'INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)',
+                [admin.id, message, 'payment']
+            );
+        }
+    });
+
+    res.json({ message: 'Payment confirmation submitted. An admin will review it shortly.' });
 });
 
 module.exports = router;

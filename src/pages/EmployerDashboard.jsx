@@ -31,6 +31,11 @@ const EmployerDashboard = () => {
     const [updatingProfile, setUpdatingProfile] = useState(false);
     const [profileMessage, setProfileMessage] = useState('');
 
+    // Payment Confirmation State
+    const [paymentDetails, setPaymentDetails] = useState('');
+    const [submittingPayment, setSubmittingPayment] = useState(false);
+    const [paymentMessage, setPaymentMessage] = useState('');
+
     useEffect(() => {
         if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
             navigate('/login');
@@ -171,21 +176,100 @@ const EmployerDashboard = () => {
         }
     };
 
+    const handleConfirmPayment = async (e) => {
+        e.preventDefault();
+        setSubmittingPayment(true);
+        setPaymentMessage('');
+        try {
+            const res = await api.post('/auth/confirm-payment', { paymentDetails });
+            setPaymentMessage(res.data.message);
+            setPaymentDetails('');
+        } catch (err) {
+            setPaymentMessage('Failed to submit confirmation.');
+        } finally {
+            setSubmittingPayment(false);
+        }
+    };
+
     if (loading) return <div className="container dashboard-container">Loading dashboard...</div>;
 
     return (
         <div className="dashboard-container container animate-fade-in">
             <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
-                        <h1>Employer Dashboard</h1>
+                        <h1>{user.role === 'admin' ? 'Admin - Employer View' : 'Employer Dashboard'}</h1>
                         <p>Welcome back, {user?.name}</p>
                     </div>
-                    <button onClick={() => navigate('/talent-search')} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white', cursor: 'pointer' }}>
-                        Search Talent Pool
-                    </button>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div className="glass" style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Subscription:</span>
+                            <span className={`badge badge-${user?.subscription_status}`} style={{
+                                textTransform: 'capitalize',
+                                background: user?.subscription_status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                color: user?.subscription_status === 'active' ? '#10b981' : '#f59e0b',
+                                border: 'none',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '10px',
+                                fontSize: '0.8rem',
+                                fontWeight: '600'
+                            }}>
+                                {user?.subscription_status || 'None'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => navigate('/talent-search')}
+                            className="btn-secondary"
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid aria(255, 255, 255, 0.1)',
+                                color: 'white',
+                                cursor: 'pointer'
+                            }}
+                            disabled={user.role !== 'admin' && user.subscription_status !== 'active'}
+                        >
+                            Search Talent Pool
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {(user?.subscription_status === 'none' || user?.subscription_status === 'pending') && user.role !== 'admin' && (
+                <div className="dashboard-card glass" style={{ marginBottom: '2rem', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <h3 style={{ color: '#f59e0b', marginBottom: '1rem' }}>
+                        {user.subscription_status === 'none' ? 'Portal Access Restricted' : 'Payment Verification Pending'}
+                    </h3>
+                    <p style={{ marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+                        {user.subscription_status === 'none'
+                            ? "Please choose a professional plan to access the Talent Pool and post more jobs. Once you've made the transfer, submit the reference below."
+                            : "Your payment confirmation has been sent. Our team is verifying the transfer. You will get full access once approved."}
+                    </p>
+
+                    {user.subscription_status === 'none' ? (
+                        <button onClick={() => navigate('/pricing')} className="btn-primary">View Pricing Plans</button>
+                    ) : (
+                        <form onSubmit={handleConfirmPayment} style={{ maxWidth: '500px' }}>
+                            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                                <label style={{ fontSize: '0.85rem' }}>Payment Reference / Receipt Details</label>
+                                <textarea
+                                    value={paymentDetails}
+                                    onChange={(e) => setPaymentDetails(e.target.value)}
+                                    placeholder="Enter bank transfer reference, date, and amount..."
+                                    rows="2"
+                                    required
+                                    style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--card-border)', color: 'white', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}
+                                ></textarea>
+                            </div>
+                            {paymentMessage && <p style={{ fontSize: '0.85rem', color: '#10b981', marginBottom: '1rem' }}>{paymentMessage}</p>}
+                            <button type="submit" className="btn-secondary" disabled={submittingPayment}>
+                                {submittingPayment ? 'Submitting...' : 'Resubmit Confirmation'}
+                            </button>
+                        </form>
+                    )}
+                </div>
+            )}
 
             <div className="dashboard-card glass" style={{ marginBottom: '2rem', padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
                 <h2>Company Profile</h2>
