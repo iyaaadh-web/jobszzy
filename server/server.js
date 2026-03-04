@@ -4,6 +4,15 @@ require('dotenv').config(); // Fallback to current directory
 const express = require('express');
 const cors = require('cors');
 
+// ERROR HANDLING: Catch crashes before they happen
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -39,12 +48,12 @@ app.get('/api/health', (req, res) => {
         status: 'UP',
         message: 'Jobszzy API is running',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'production'
     });
 });
 
 // Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'production ') {
     // Set static folder
     const distPath = path.resolve(__dirname, '../dist');
     app.use(express.static(distPath));
@@ -62,16 +71,18 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// Global Error Handler
+// Global Error Handler for Express
 app.use((err, req, res, next) => {
-    console.error('Unhandled Error:', err);
+    console.error('Express Error:', err);
     res.status(err.status || 500).json({
-        error: err.message || 'An unexpected error occurred on the server'
+        error: err.message || 'Internal Server Error'
     });
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'not set (defaulting to development)'}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`--- Jobszzy Backend Started ---`);
+    console.log(`Port: ${PORT}`);
+    console.log(`Env: ${process.env.NODE_ENV}`);
+    console.log(`DB: ${path.resolve(__dirname, 'jobszzy.sqlite')}`);
 });

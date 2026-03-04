@@ -118,8 +118,15 @@ const EmployerDashboard = () => {
     return (
         <div className="dashboard-container container animate-fade-in">
             <div className="dashboard-header">
-                <h1>Employer Dashboard</h1>
-                <p>Welcome back, {user?.name}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <div>
+                        <h1>Employer Dashboard</h1>
+                        <p>Welcome back, {user?.name}</p>
+                    </div>
+                    <button onClick={() => navigate('/talent-search')} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white', cursor: 'pointer' }}>
+                        Search Talent Pool
+                    </button>
+                </div>
             </div>
 
             <div className="dashboard-grid">

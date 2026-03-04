@@ -5,6 +5,7 @@ import api from '../utils/api';
 const TalentSearch = () => {
     const { user } = useContext(AuthContext);
     const [talent, setTalent] = useState([]);
+    const [filteredTalent, setFilteredTalent] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -13,6 +14,7 @@ const TalentSearch = () => {
             try {
                 const res = await api.get('/auth/talent');
                 setTalent(res.data);
+                setFilteredTalent(res.data);
             } catch (err) {
                 if (err.response && err.response.status === 403) {
                     setError('Access Denied: Only employers and admins can access the Talent Pool.');
@@ -46,6 +48,18 @@ const TalentSearch = () => {
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Talent Pool</h1>
                 <p style={{ color: 'var(--text-secondary)' }}>Search our database of verified professionals.</p>
+                <div style={{ marginTop: '2rem', maxWidth: '600px', margin: '2rem auto 0 auto' }}>
+                    <input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        style={{ width: '100%', padding: '1rem', borderRadius: 'var(--radius-md)', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'white' }}
+                        onChange={(e) => {
+                            const term = e.target.value.toLowerCase();
+                            const filtered = talent.filter(p => p.name.toLowerCase().includes(term) || p.email.toLowerCase().includes(term));
+                            setFilteredTalent(filtered);
+                        }}
+                    />
+                </div>
             </div>
 
             {error && (
@@ -64,12 +78,12 @@ const TalentSearch = () => {
                     maxWidth: '800px',
                     margin: '0 auto'
                 }}>
-                    {talent.length === 0 ? (
+                    {filteredTalent.length === 0 ? (
                         <div className="glass" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', borderRadius: 'var(--radius-lg)' }}>
-                            No job seekers found in the talent pool currently.
+                            No job seekers found matching your search.
                         </div>
                     ) : (
-                        talent.map(person => (
+                        filteredTalent.map(person => (
                             <div key={person.id} className="glass card-hover" style={{
                                 padding: '1.5rem 2rem',
                                 borderRadius: 'var(--radius-lg)',
