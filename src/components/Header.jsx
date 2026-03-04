@@ -47,7 +47,7 @@ const Header = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.is_read).length : 0;
   const isProfessional = user && (user.role === 'employer' || user.role === 'admin');
   const isAdmin = user && user.role === 'admin';
 
@@ -97,7 +97,7 @@ const Header = () => {
                           <button
                             onClick={async () => {
                               await api.put('/notifications/read-all');
-                              setNotifications(notifications.map(n => ({ ...n, is_read: 1 })));
+                              setNotifications(prev => Array.isArray(prev) ? prev.map(n => ({ ...n, is_read: 1 })) : []);
                             }}
                             style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '0.8rem', cursor: 'pointer' }}
                           >
@@ -109,7 +109,7 @@ const Header = () => {
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>No notifications</p>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {notifications.map(n => (
+                          {Array.isArray(notifications) && notifications.map(n => (
                             <div
                               key={n.id}
                               onClick={() => markAsRead(n.id)}

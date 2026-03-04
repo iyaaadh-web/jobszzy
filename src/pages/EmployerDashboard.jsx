@@ -50,9 +50,9 @@ const EmployerDashboard = () => {
                 const res = await api.get('/jobs');
                 // Admin sees all, Employer sees only theirs
                 if (user.role === 'admin') {
-                    setJobs(res.data);
+                    setJobs(Array.isArray(res.data) ? res.data : []);
                 } else {
-                    setJobs(res.data.filter(j => j.employer_id === user.id));
+                    setJobs(Array.isArray(res.data) ? res.data.filter(j => j.employer_id === user.id) : []);
                 }
             } catch (err) {
                 console.error("Failed to fetch jobs");
@@ -123,7 +123,7 @@ const EmployerDashboard = () => {
         setSelectedJob(jobId);
         try {
             const res = await api.get(`/applications/job/${jobId}`);
-            setApplicants(res.data);
+            setApplicants(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Failed to fetch applicants");
         } finally {
@@ -135,7 +135,7 @@ const EmployerDashboard = () => {
         if (window.confirm('Are you sure you want to delete this job posting?')) {
             try {
                 await api.delete(`/jobs/${jobId}`);
-                setJobs(jobs.filter(j => j.id !== jobId));
+                setJobs(prev => Array.isArray(prev) ? prev.filter(j => j.id !== jobId) : []);
                 if (selectedJob === jobId) setSelectedJob(null);
             } catch (err) {
                 alert('Failed to delete job');
@@ -414,7 +414,7 @@ const EmployerDashboard = () => {
                             <p className="no-data">You haven't posted any jobs yet.</p>
                         ) : (
                             <ul className="posted-jobs-list">
-                                {jobs.map(job => (
+                                {Array.isArray(jobs) && jobs.map(job => (
                                     <li key={job.id} className={`posted-job-item ${selectedJob === job.id ? 'active' : ''}`} onClick={() => fetchApplicants(job.id)}>
                                         <div className="job-item-info">
                                             <h4>{job.title}</h4>
@@ -439,7 +439,7 @@ const EmployerDashboard = () => {
                             <p className="no-data">No one has applied for this job yet.</p>
                         ) : (
                             <ul className="applicants-list" style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
-                                {applicants.map(app => (
+                                {Array.isArray(applicants) && applicants.map(app => (
                                     <li key={app.id} style={{ padding: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div>
                                             <div style={{ fontWeight: '600' }}>{app.seeker_name}</div>

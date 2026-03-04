@@ -32,10 +32,10 @@ const AdminDashboard = () => {
                     api.get('/admin/settings/pricing_plans'),
                     api.get('/admin/subscriptions/pending')
                 ]);
-                setUsers(usersRes.data);
-                setJobs(jobsRes.data);
-                setPricing(pricingRes.data || []);
-                setPendingPayments(pendingRes.data || []);
+                setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+                setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
+                setPricing(Array.isArray(pricingRes.data) ? pricingRes.data : []);
+                setPendingPayments(Array.isArray(pendingRes.data) ? pendingRes.data : []);
             } catch (err) {
                 console.error("Failed to fetch admin data");
             } finally {
@@ -362,7 +362,7 @@ const AdminDashboard = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {pendingPayments.map(p => (
+                                        {Array.isArray(pendingPayments) && pendingPayments.map(p => (
                                             <tr key={p.id}>
                                                 <td>#{p.id}</td>
                                                 <td>{p.name}</td>

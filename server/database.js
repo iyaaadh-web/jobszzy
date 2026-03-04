@@ -35,38 +35,38 @@ db.serialize(() => {
                 const columnNames = columns.map(c => c.name);
                 if (!columnNames.includes('logo_url')) {
                     db.run("ALTER TABLE users ADD COLUMN logo_url TEXT", (err) => {
-                        if (err) console.error('Error adding logo_url:', err.message);
-                        else console.log('Migrated: Added logo_url to users table.');
+                        if (err) console.error('[MIGRATION ERROR] logo_url:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added logo_url');
                     });
                 }
                 if (!columnNames.includes('cv_url')) {
                     db.run("ALTER TABLE users ADD COLUMN cv_url TEXT", (err) => {
-                        if (err) console.error('Error adding cv_url:', err.message);
-                        else console.log('Migrated: Added cv_url to users table.');
+                        if (err) console.error('[MIGRATION ERROR] cv_url:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added cv_url');
                     });
                 }
                 if (!columnNames.includes('bio')) {
                     db.run("ALTER TABLE users ADD COLUMN bio TEXT", (err) => {
-                        if (err) console.error('Error adding bio:', err.message);
-                        else console.log('Migrated: Added bio to users table.');
+                        if (err) console.error('[MIGRATION ERROR] bio:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added bio');
                     });
                 }
                 if (!columnNames.includes('skills')) {
                     db.run("ALTER TABLE users ADD COLUMN skills TEXT", (err) => {
-                        if (err) console.error('Error adding skills:', err.message);
-                        else console.log('Migrated: Added skills to users table.');
+                        if (err) console.error('[MIGRATION ERROR] skills:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added skills');
                     });
                 }
                 if (!columnNames.includes('plan_id')) {
                     db.run("ALTER TABLE users ADD COLUMN plan_id TEXT DEFAULT 'basic'", (err) => {
-                        if (err) console.error('Error adding plan_id:', err.message);
-                        else console.log('Migrated: Added plan_id to users table.');
+                        if (err) console.error('[MIGRATION ERROR] plan_id:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added plan_id');
                     });
                 }
                 if (!columnNames.includes('subscription_status')) {
                     db.run("ALTER TABLE users ADD COLUMN subscription_status TEXT DEFAULT 'none'", (err) => {
-                        if (err) console.error('Error adding subscription_status:', err.message);
-                        else console.log('Migrated: Added subscription_status to users table.');
+                        if (err) console.error('[MIGRATION ERROR] subscription_status:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added subscription_status');
                     });
                 }
             });

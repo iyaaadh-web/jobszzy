@@ -228,6 +228,8 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
 
         try {
             const plans = (row && row.value) ? JSON.parse(row.value) : [];
+            console.log(`[DEBUG] Available plans in DB:`, JSON.stringify(plans));
+
             const selectedPlan = plans.find(p => String(p.id) === String(plan_id));
 
             if (!selectedPlan) {
