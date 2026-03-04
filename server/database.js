@@ -69,6 +69,12 @@ db.serialize(() => {
                         else console.log('[MIGRATION SUCCESS] Added subscription_status');
                     });
                 }
+                if (!columnNames.includes('payment_slip_url')) {
+                    db.run("ALTER TABLE users ADD COLUMN payment_slip_url TEXT", (err) => {
+                        if (err) console.error('[MIGRATION ERROR] payment_slip_url:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added payment_slip_url');
+                    });
+                }
             });
         }
     });

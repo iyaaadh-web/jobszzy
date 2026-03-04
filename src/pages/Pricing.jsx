@@ -34,6 +34,15 @@ const Pricing = () => {
         setSubmitting(true);
         setMessage(null);
         try {
+            // Check if plan is paid by searching in local plans state
+            const selectedPlan = plans.find(p => String(p.id) === String(planId));
+            const isPaid = selectedPlan && String(selectedPlan.price) !== '0';
+
+            if (isPaid) {
+                navigate(`/checkout/${planId}`);
+                return;
+            }
+
             const res = await api.post('/auth/subscribe', { plan_id: planId });
             setMessage({ type: 'success', text: res.data.message });
 
@@ -41,11 +50,7 @@ const Pricing = () => {
             const updatedUser = { ...user, plan_id: planId, subscription_status: res.data.status };
             setUser(updatedUser);
 
-            if (res.data.status === 'pending') {
-                setTimeout(() => navigate('/employer/dashboard'), 2000);
-            } else if (res.data.status === 'active') {
-                setTimeout(() => navigate('/employer/dashboard'), 1500);
-            }
+            setTimeout(() => navigate('/employer/dashboard'), 1500);
         } catch (err) {
             console.error('Plan selection error:', err);
             const errorMsg = err.response?.data?.error || err.message || 'Failed to select plan';

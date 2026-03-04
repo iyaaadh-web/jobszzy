@@ -14,6 +14,7 @@ import BrowseJobs from './pages/BrowseJobs';
 import SeekerDashboard from './pages/SeekerDashboard';
 import PostJobInfo from './pages/PostJobInfo';
 import Pricing from './pages/Pricing';
+import Checkout from './pages/Checkout'; // Import Checkout
 import TalentSearch from './pages/TalentSearch';
 import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
@@ -51,6 +52,7 @@ function App() {
             <Route path="/seeker/dashboard" element={<SeekerDashboard />} />
             <Route path="/post-job-info" element={<PostJobInfo />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout/:planId" element={<Checkout />} />
             <Route path="/talent-search" element={<TalentSearch />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<Contact />} />

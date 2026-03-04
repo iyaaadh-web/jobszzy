@@ -262,24 +262,39 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
     });
 });
 
-// Confirm Payment
-router.post('/confirm-payment', require('../middleware/auth').verifyToken, (req, res) => {
-    const { paymentDetails } = req.body;
+// Confirm Payment (Upload Slip)
+router.post('/confirm-payment', require('../middleware/auth').verifyToken, upload.single('slip'), (req, res) => {
     const userId = req.user.id;
 
-    const message = `Payment confirmation submitted by ${req.user.email}. Details: ${paymentDetails}`;
+    if (!req.file) {
+        return res.status(400).json({ error: 'No payment slip file provided' });
+    }
 
-    // Notify admin
-    db.get('SELECT id FROM users WHERE role = "admin" LIMIT 1', (err, admin) => {
-        if (!err && admin) {
-            db.run(
-                'INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)',
-                [admin.id, message, 'payment']
-            );
+    const payment_slip_url = `/uploads/${req.file.filename}`;
+
+    db.run(
+        `UPDATE users SET payment_slip_url = ?, subscription_status = 'pending' WHERE id = ?`,
+        [payment_slip_url, userId],
+        function (err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+
+            // Notify admin
+            db.get('SELECT id FROM users WHERE role = "admin" LIMIT 1', (err, admin) => {
+                if (!err && admin) {
+                    const message = `New payment slip uploaded by ${req.user.email} for plan approval.`;
+                    db.run(
+                        'INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)',
+                        [admin.id, message, 'payment']
+                    );
+                }
+            });
+
+            res.json({
+                message: 'Payment slip submitted successfully. An admin will review it shortly.',
+                payment_slip_url
+            });
         }
-    });
-
-    res.json({ message: 'Payment confirmation submitted. An admin will review it shortly.' });
+    );
 });
 
 module.exports = router;

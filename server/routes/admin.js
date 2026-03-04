@@ -61,7 +61,7 @@ router.post('/settings/:key', (req, res) => {
 
 // Get pending subscriptions
 router.get('/subscriptions/pending', (req, res) => {
-    db.all(`SELECT id, name, email, plan_id, subscription_status FROM users WHERE subscription_status = 'pending'`, [], (err, rows) => {
+    db.all(`SELECT id, name, email, plan_id, subscription_status, payment_slip_url FROM users WHERE subscription_status = 'pending'`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows);
     });

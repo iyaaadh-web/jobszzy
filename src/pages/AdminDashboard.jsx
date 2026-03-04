@@ -369,14 +369,27 @@ const AdminDashboard = () => {
                                                 <td>{p.email}</td>
                                                 <td><span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', textTransform: 'uppercase', fontSize: '0.75rem' }}>{p.plan_id}</span></td>
                                                 <td>
-                                                    <button
-                                                        onClick={() => handleApprovePayment(p.id)}
-                                                        className="btn-primary"
-                                                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                                                        disabled={approving === p.id}
-                                                    >
-                                                        {approving === p.id ? '...' : 'Approve Access'}
-                                                    </button>
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        {p.payment_slip_url && (
+                                                            <a
+                                                                href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${p.payment_slip_url}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="btn-secondary"
+                                                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                                                            >
+                                                                View Slip
+                                                            </a>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleApprovePayment(p.id)}
+                                                            className="btn-primary"
+                                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                                                            disabled={approving === p.id}
+                                                        >
+                                                            {approving === p.id ? '...' : 'Approve Access'}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
