@@ -12,11 +12,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 80px;
+    height: 70px;
 }
 
 .logo {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.5px;
@@ -29,7 +29,7 @@
 .nav-container {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 1.5rem;
 }
 
 .nav-links {
@@ -40,7 +40,7 @@
 .nav-links a {
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .nav-links a:hover {

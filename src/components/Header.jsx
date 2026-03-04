@@ -69,7 +69,9 @@ const Header = () => {
             {isProfessional && (
               <Link to="/job-seekers" onClick={closeMenu}>Talent Pool</Link>
             )}
-            <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
+            {isProfessional && (
+              <Link to="/pricing" onClick={closeMenu}>Pricing</Link>
+            )}
           </nav>
           <div className="auth-buttons">
             {user ? (
