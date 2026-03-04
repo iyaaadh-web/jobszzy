@@ -214,21 +214,30 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
     const { plan_id } = req.body;
     const userId = req.user.id;
 
-    if (!['basic', 'premium', 'enterprise'].includes(plan_id)) {
-        return res.status(400).json({ error: 'Invalid plan selected' });
-    }
+    // Fetch pricing plans from settings for validation
+    db.get("SELECT value FROM settings WHERE key = 'pricing_plans'", [], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
 
-    // Basic is instant, others are pending
-    const status = plan_id === 'basic' ? 'active' : 'pending';
+        const plans = row ? JSON.parse(row.value) : [];
+        const selectedPlan = plans.find(p => p.id === plan_id);
 
-    db.run(
-        `UPDATE users SET plan_id = ?, subscription_status = ? WHERE id = ?`,
-        [plan_id, status, userId],
-        function (err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({ message: `Plan ${plan_id} selected successfully`, plan_id, status });
+        if (!selectedPlan) {
+            return res.status(400).json({ error: 'Invalid plan selected' });
         }
-    );
+
+        // If price is 0 or Free (case insensitive check), status is active
+        const priceStr = String(selectedPlan.price).toLowerCase();
+        const status = (priceStr === '0' || priceStr === 'free') ? 'active' : 'pending';
+
+        db.run(
+            `UPDATE users SET plan_id = ?, subscription_status = ? WHERE id = ?`,
+            [plan_id, status, userId],
+            function (err) {
+                if (err) return res.status(500).json({ error: 'Database error' });
+                res.json({ message: `Plan ${selectedPlan.name} selected successfully`, plan_id, status });
+            }
+        );
+    });
 });
 
 // Confirm Payment

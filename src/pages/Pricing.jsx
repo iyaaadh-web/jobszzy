@@ -43,6 +43,8 @@ const Pricing = () => {
 
             if (res.data.status === 'pending') {
                 setTimeout(() => navigate('/employer/dashboard'), 2000);
+            } else if (res.data.status === 'active') {
+                setTimeout(() => navigate('/employer/dashboard'), 1500);
             }
         } catch (err) {
             setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to select plan' });
@@ -71,8 +73,12 @@ const Pricing = () => {
                         <div key={plan.id} className="glass card-hover" style={{ padding: '2.5rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{plan.name}</h3>
                             <div style={{ marginBottom: '2rem' }}>
-                                <span style={{ fontSize: '3rem', fontWeight: '800' }}>{plan.price}</span>
-                                <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>MVR /month</span>
+                                <span style={{ fontSize: '3rem', fontWeight: '800' }}>
+                                    {String(plan.price) === '0' ? 'Free' : plan.price}
+                                </span>
+                                {String(plan.price) !== '0' && (
+                                    <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>MVR /month</span>
+                                )}
                             </div>
                             <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem', textAlign: 'left', flex: 1 }}>
                                 {Array.isArray(plan.features) && plan.features.map((feature, idx) => (
