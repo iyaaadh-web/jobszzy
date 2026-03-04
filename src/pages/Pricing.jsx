@@ -47,7 +47,10 @@ const Pricing = () => {
                 setTimeout(() => navigate('/employer/dashboard'), 1500);
             }
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to select plan' });
+            console.error('Plan selection error:', err);
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to select plan';
+            const details = err.response?.data?.details ? ` - ${err.response.data.details}` : '';
+            setMessage({ type: 'error', text: errorMsg + details });
         } finally {
             setSubmitting(false);
         }

@@ -214,30 +214,30 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
     const { plan_id } = req.body;
     const userId = req.user.id;
 
-    console.log(`User ${userId} attempting to subscribe to plan: ${plan_id}`);
+    if (!plan_id) {
+        return res.status(400).json({ error: 'No plan ID provided' });
+    }
 
-    // Fetch pricing plans from settings for validation
+    console.log(`[DEBUG] User ${userId} subscribing. Plan sent: "${plan_id}"`);
+
     db.get("SELECT value FROM settings WHERE key = 'pricing_plans'", [], (err, row) => {
         if (err) {
-            console.error('Database error fetching settings:', err);
-            return res.status(500).json({ error: 'Database error' });
+            console.error('[DATABASE ERROR] Fetching plans:', err);
+            return res.status(500).json({ error: `Database error: ${err.message}` });
         }
 
         try {
             const plans = (row && row.value) ? JSON.parse(row.value) : [];
-            if (!Array.isArray(plans)) {
-                console.error('Pricing plans setting is not an array:', row?.value);
-                return res.status(500).json({ error: 'System configuration error' });
-            }
-
             const selectedPlan = plans.find(p => String(p.id) === String(plan_id));
 
             if (!selectedPlan) {
-                console.warn(`Plan not found. User sent: ${plan_id}. Available plans:`, plans.map(p => p.id));
-                return res.status(400).json({ error: 'Invalid plan selected' });
+                console.warn(`[VALIDATION ERROR] Plan "${plan_id}" not found. Available:`, plans.map(p => p.id));
+                return res.status(400).json({
+                    error: 'Invalid plan selected',
+                    details: `Sent: ${plan_id}, Available: ${plans.map(p => p.id).join(', ')}`
+                });
             }
 
-            // If price is 0 or Free (case insensitive check), status is active
             const priceStr = String(selectedPlan.price || '0').toLowerCase();
             const status = (priceStr === '0' || priceStr === 'free') ? 'active' : 'pending';
 
@@ -246,16 +246,16 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
                 [plan_id, status, userId],
                 function (err) {
                     if (err) {
-                        console.error('Database error updating user subscription:', err);
-                        return res.status(500).json({ error: 'Database error' });
+                        console.error('[DATABASE ERROR] Updating subscription:', err);
+                        return res.status(500).json({ error: `Database error during update: ${err.message}` });
                     }
-                    console.log(`User ${userId} subscribed to ${selectedPlan.name} (Status: ${status})`);
+                    console.log(`[SUCCESS] User ${userId} -> ${plan_id} (${status})`);
                     res.json({ message: `Plan ${selectedPlan.name} selected successfully`, plan_id, status });
                 }
             );
         } catch (parseErr) {
-            console.error('Error parsing pricing plans:', parseErr, row?.value);
-            return res.status(500).json({ error: 'Internal server error during plan selection' });
+            console.error('[JSON ERROR] Parsing plans:', parseErr);
+            return res.status(500).json({ error: `Internal server error: ${parseErr.message}` });
         }
     });
 });
