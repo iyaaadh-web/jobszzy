@@ -8,7 +8,7 @@ const { verifyToken, isEmployerOrAdmin, isAdmin } = require('../middleware/auth'
 // Setup Multer for PDF Uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // Store in the server/uploads directory
+        cb(null, path.join(__dirname, '../uploads'));
     },
     filename: function (req, file, cb) {
         // Generate unique filename: timestamp-random-filename.pdf
