@@ -97,6 +97,35 @@ const AdminDashboard = () => {
         setPricing(newPricing);
     };
 
+    const handleAddPlan = () => {
+        const newPlan = {
+            id: 'plan-' + Date.now(),
+            name: 'New Plan',
+            price: '0',
+            features: ['Feature 1']
+        };
+        setPricing([...pricing, newPlan]);
+    };
+
+    const handleDeletePlan = (index) => {
+        if (window.confirm('Are you sure you want to delete this pricing plan?')) {
+            const newPricing = pricing.filter((_, i) => i !== index);
+            setPricing(newPricing);
+        }
+    };
+
+    const handleAddFeature = (planIndex) => {
+        const newPricing = [...pricing];
+        newPricing[planIndex].features.push('New Feature');
+        setPricing(newPricing);
+    };
+
+    const handleRemoveFeature = (planIndex, featureIndex) => {
+        const newPricing = [...pricing];
+        newPricing[planIndex].features = newPricing[planIndex].features.filter((_, i) => i !== featureIndex);
+        setPricing(newPricing);
+    };
+
     const handleApprovePayment = async (userId) => {
         setApproving(userId);
         try {
@@ -242,9 +271,16 @@ const AdminDashboard = () => {
                                 {saving ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'start' }}>
                             {pricing.map((plan, pIdx) => (
-                                <div key={plan.id} className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div key={plan.id} className="glass card-hover" style={{ padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.08)', position: 'relative', transition: 'all 0.3s ease' }}>
+                                    <button
+                                        onClick={() => handleDeletePlan(pIdx)}
+                                        style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        title="Delete Plan"
+                                    >
+                                        &times;
+                                    </button>
                                     <div className="form-group">
                                         <label>Plan Name</label>
                                         <input
@@ -262,19 +298,47 @@ const AdminDashboard = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label>Features</label>
+                                        <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            Features
+                                            <button
+                                                onClick={() => handleAddFeature(pIdx)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '0.8rem', cursor: 'pointer' }}
+                                            >
+                                                + Add Feature
+                                            </button>
+                                        </label>
                                         {plan.features.map((feat, fIdx) => (
-                                            <input
-                                                key={fIdx}
-                                                type="text"
-                                                value={feat}
-                                                onChange={(e) => updatePricingFeatures(pIdx, fIdx, e.target.value)}
-                                                style={{ marginBottom: '0.5rem' }}
-                                            />
+                                            <div key={fIdx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                <input
+                                                    type="text"
+                                                    value={feat}
+                                                    onChange={(e) => updatePricingFeatures(pIdx, fIdx, e.target.value)}
+                                                    style={{ marginBottom: 0 }}
+                                                />
+                                                <button
+                                                    onClick={() => handleRemoveFeature(pIdx, fIdx)}
+                                                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0 8px', cursor: 'pointer' }}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
                             ))}
+                            <div
+                                onClick={handleAddPlan}
+                                className="glass-hover"
+                                style={{
+                                    padding: '1.5rem', borderRadius: 'var(--radius-md)',
+                                    border: '2px dashed rgba(255,255,255,0.1)',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', minHeight: '300px', color: 'var(--text-secondary)'
+                                }}
+                            >
+                                <span style={{ fontSize: '3rem', marginBottom: '1rem' }}>+</span>
+                                <span>Add New Pricing Plan</span>
+                            </div>
                         </div>
                     </div>
                 )}

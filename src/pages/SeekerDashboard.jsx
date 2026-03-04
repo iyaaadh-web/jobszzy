@@ -5,7 +5,7 @@ import api from '../utils/api';
 import './Dashboard.css';
 
 const SeekerDashboard = () => {
-    const { user, uploadCv } = useContext(AuthContext);
+    const { user, loading: authLoading, uploadCv } = useContext(AuthContext);
     const [cvFile, setCvFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [applications, setApplications] = useState([]);
@@ -16,6 +16,7 @@ const SeekerDashboard = () => {
     const [skills, setSkills] = useState(user?.skills || '');
     const [updatingProfile, setUpdatingProfile] = useState(false);
 
+    if (authLoading) return <div className="container dashboard-container">Loading...</div>;
     if (!user) return <Navigate to="/login" />;
     if (user.role !== 'seeker') return <Navigate to="/" />;
 

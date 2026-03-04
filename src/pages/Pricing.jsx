@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +14,7 @@ const Pricing = () => {
     useEffect(() => {
         const fetchPricing = async () => {
             try {
-                const res = await api.get('/admin/settings/pricing_plans');
+                const res = await api.get('/public/settings/pricing_plans');
                 setPlans(res.data || []);
             } catch (err) {
                 console.error("Failed to fetch plans");

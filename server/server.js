@@ -42,6 +42,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/public', require('./routes/public'));
 
 // Root route for sanity check
 app.get('/api/health', (req, res) => {

@@ -3,13 +3,14 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 
 const TalentSearch = () => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading } = useContext(AuthContext);
     const [talent, setTalent] = useState([]);
     const [filteredTalent, setFilteredTalent] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        if (authLoading) return;
         const fetchTalent = async () => {
             try {
                 const res = await api.get('/auth/talent');

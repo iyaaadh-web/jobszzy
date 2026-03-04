@@ -5,7 +5,7 @@ import api from '../utils/api';
 import './Dashboard.css'; // Shared CSS for Admin/Employer dashboards
 
 const EmployerDashboard = () => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [jobs, setJobs] = useState([]);
@@ -37,6 +37,7 @@ const EmployerDashboard = () => {
     const [paymentMessage, setPaymentMessage] = useState('');
 
     useEffect(() => {
+        if (authLoading) return;
         if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
             navigate('/login');
             return;
@@ -218,19 +219,19 @@ const EmployerDashboard = () => {
                             </span>
                         </div>
                         <button
-                            onClick={() => navigate('/talent-search')}
+                            onClick={() => navigate('/job-seekers')}
                             className="btn-secondary"
                             style={{
                                 padding: '0.75rem 1.5rem',
                                 borderRadius: 'var(--radius-md)',
                                 background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid aria(255, 255, 255, 0.1)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                                 color: 'white',
                                 cursor: 'pointer'
                             }}
                             disabled={user.role !== 'admin' && user.subscription_status !== 'active'}
                         >
-                            Search Talent Pool
+                            Access Talent Pool
                         </button>
                     </div>
                 </div>

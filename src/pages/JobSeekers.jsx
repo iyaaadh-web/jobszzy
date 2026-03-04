@@ -3,12 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 
 const JobSeekers = () => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading } = useContext(AuthContext);
     const [talent, setTalent] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        if (authLoading) return;
         const fetchTalent = async () => {
             try {
                 // This endpoint checks for employer/admin role in backend
