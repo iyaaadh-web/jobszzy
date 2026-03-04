@@ -17,6 +17,7 @@ const EmployerDashboard = () => {
     const [location, setLocation] = useState('');
     const [type, setType] = useState('Full-time');
     const [salary, setSalary] = useState('');
+    const [currency, setCurrency] = useState('MVR');
     const [description, setDescription] = useState('');
     const [pdfFile, setPdfFile] = useState(null);
     const [posting, setPosting] = useState(false);
@@ -79,7 +80,7 @@ const EmployerDashboard = () => {
             formData.append('company', company);
             formData.append('location', location);
             formData.append('type', type);
-            formData.append('salary', salary);
+            formData.append('salary', salary ? `${currency} ${salary}` : '');
             formData.append('description', description);
 
             // Randomize color for prototype
@@ -350,7 +351,30 @@ const EmployerDashboard = () => {
 
                         <div className="form-group">
                             <label>Salary Range (Optional)</label>
-                            <input type="text" value={salary} onChange={e => setSalary(e.target.value)} placeholder="e.g. $100k - $120k / year" />
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <select
+                                    value={currency}
+                                    onChange={e => setCurrency(e.target.value)}
+                                    style={{
+                                        width: '100px',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '0.5rem',
+                                        border: '1px solid var(--card-border)',
+                                        color: 'white'
+                                    }}
+                                >
+                                    <option value="MVR">MVR</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    value={salary}
+                                    onChange={e => setSalary(e.target.value)}
+                                    placeholder="e.g. 15,000 - 20,000"
+                                    style={{ flex: 1 }}
+                                />
+                            </div>
                         </div>
 
                         <div className="form-group">
