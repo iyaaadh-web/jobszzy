@@ -1,11 +1,14 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 import api from '../utils/api';
 import './Header.css';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
+  const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -74,6 +77,14 @@ const Header = () => {
             )}
           </nav>
           <div className="auth-buttons">
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle-btn"
+              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', marginRight: '1rem', display: 'flex', alignItems: 'center' }}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             {user ? (
               <>
                 {/* Notifications Bell */}
@@ -81,7 +92,7 @@ const Header = () => {
                   <button
                     className="notification-bell"
                     onClick={() => setShowNotifications(!showNotifications)}
-                    style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', position: 'relative', padding: '0.5rem' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', position: 'relative', padding: '0.5rem' }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
@@ -93,7 +104,7 @@ const Header = () => {
                       maxHeight: '400px', overflowY: 'auto', zIndex: '1000',
                       marginTop: '1rem', padding: '1rem', borderRadius: 'var(--radius-lg)'
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
                         <h4 style={{ margin: 0 }}>Notifications</h4>
                         {unreadCount > 0 && (
                           <button
@@ -117,11 +128,11 @@ const Header = () => {
                               onClick={() => markAsRead(n.id)}
                               style={{
                                 padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                                background: n.is_read ? 'transparent' : 'rgba(255,255,255,0.05)',
-                                cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)'
+                                background: n.is_read ? 'transparent' : 'var(--card-bg)',
+                                cursor: 'pointer', border: '1px solid var(--card-border)'
                               }}
                             >
-                              <p style={{ margin: 0, fontSize: '0.85rem', color: n.is_read ? 'var(--text-secondary)' : 'white' }}>{n.message}</p>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: n.is_read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{n.message}</p>
                               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(n.created_at).toLocaleString()}</span>
                             </div>
                           ))}
