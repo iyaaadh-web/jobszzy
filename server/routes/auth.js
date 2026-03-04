@@ -214,29 +214,49 @@ router.post('/subscribe', require('../middleware/auth').verifyToken, (req, res) 
     const { plan_id } = req.body;
     const userId = req.user.id;
 
+    console.log(`User ${userId} attempting to subscribe to plan: ${plan_id}`);
+
     // Fetch pricing plans from settings for validation
     db.get("SELECT value FROM settings WHERE key = 'pricing_plans'", [], (err, row) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
-
-        const plans = row ? JSON.parse(row.value) : [];
-        const selectedPlan = plans.find(p => p.id === plan_id);
-
-        if (!selectedPlan) {
-            return res.status(400).json({ error: 'Invalid plan selected' });
+        if (err) {
+            console.error('Database error fetching settings:', err);
+            return res.status(500).json({ error: 'Database error' });
         }
 
-        // If price is 0 or Free (case insensitive check), status is active
-        const priceStr = String(selectedPlan.price).toLowerCase();
-        const status = (priceStr === '0' || priceStr === 'free') ? 'active' : 'pending';
-
-        db.run(
-            `UPDATE users SET plan_id = ?, subscription_status = ? WHERE id = ?`,
-            [plan_id, status, userId],
-            function (err) {
-                if (err) return res.status(500).json({ error: 'Database error' });
-                res.json({ message: `Plan ${selectedPlan.name} selected successfully`, plan_id, status });
+        try {
+            const plans = (row && row.value) ? JSON.parse(row.value) : [];
+            if (!Array.isArray(plans)) {
+                console.error('Pricing plans setting is not an array:', row?.value);
+                return res.status(500).json({ error: 'System configuration error' });
             }
-        );
+
+            const selectedPlan = plans.find(p => String(p.id) === String(plan_id));
+
+            if (!selectedPlan) {
+                console.warn(`Plan not found. User sent: ${plan_id}. Available plans:`, plans.map(p => p.id));
+                return res.status(400).json({ error: 'Invalid plan selected' });
+            }
+
+            // If price is 0 or Free (case insensitive check), status is active
+            const priceStr = String(selectedPlan.price || '0').toLowerCase();
+            const status = (priceStr === '0' || priceStr === 'free') ? 'active' : 'pending';
+
+            db.run(
+                `UPDATE users SET plan_id = ?, subscription_status = ? WHERE id = ?`,
+                [plan_id, status, userId],
+                function (err) {
+                    if (err) {
+                        console.error('Database error updating user subscription:', err);
+                        return res.status(500).json({ error: 'Database error' });
+                    }
+                    console.log(`User ${userId} subscribed to ${selectedPlan.name} (Status: ${status})`);
+                    res.json({ message: `Plan ${selectedPlan.name} selected successfully`, plan_id, status });
+                }
+            );
+        } catch (parseErr) {
+            console.error('Error parsing pricing plans:', parseErr, row?.value);
+            return res.status(500).json({ error: 'Internal server error during plan selection' });
+        }
     });
 });
 
