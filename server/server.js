@@ -7,12 +7,19 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Ensure uploads directory exists
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Middleware
 app.use(cors()); // Allow frontend to talk to backend
 app.use(express.json()); // Parse JSON body
 
 // Serve static files from the uploads directory (for PDFs/Images)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Import Routes
 const authRoutes = require('./routes/auth');
@@ -28,7 +35,12 @@ app.use('/api/applications', applicationRoutes);
 
 // Root route for sanity check
 app.get('/api/health', (req, res) => {
-    res.send('Jobszzy API is running');
+    res.json({
+        status: 'UP',
+        message: 'Jobszzy API is running',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
 // Serve frontend in production
