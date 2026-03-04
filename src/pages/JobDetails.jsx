@@ -68,7 +68,11 @@ const JobDetails = () => {
                     <div className="job-details-company">
                         <div className="job-details-logo" style={{ background: job.color || '#3b82f6', overflow: 'hidden' }}>
                             {job.logo_url ? (
-                                <img src={job.logo_url} alt={job.company} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img
+                                    src={job.logo_url.startsWith('http') ? job.logo_url : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${job.logo_url}`}
+                                    alt={job.company}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
                             ) : (
                                 job.company.charAt(0) || 'J'
                             )}

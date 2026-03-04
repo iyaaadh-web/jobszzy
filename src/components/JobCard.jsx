@@ -8,7 +8,11 @@ const JobCard = ({ job }) => {
                 <div className="company-info">
                     <div className="company-logo" style={{ background: job.color, overflow: 'hidden' }}>
                         {job.logo_url ? (
-                            <img src={job.logo_url} alt={job.company} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img
+                                src={job.logo_url.startsWith('http') ? job.logo_url : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${job.logo_url}`}
+                                alt={job.company}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
                         ) : (
                             job.company.charAt(0)
                         )}

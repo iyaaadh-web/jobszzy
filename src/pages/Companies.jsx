@@ -58,7 +58,11 @@ const Companies = () => {
                                     overflow: 'hidden'
                                 }}>
                                     {company.logo_url ? (
-                                        <img src={company.logo_url} alt={`${company.name} logo`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img
+                                            src={company.logo_url.startsWith('http') ? company.logo_url : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${company.logo_url}`}
+                                            alt={`${company.name} logo`}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
                                     ) : (
                                         <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{company.name.charAt(0).toUpperCase()}</span>
                                     )}
