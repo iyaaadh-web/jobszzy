@@ -201,7 +201,7 @@ router.put('/profile', require('../middleware/auth').verifyToken, (req, res) => 
 
     db.run(
         `UPDATE users SET name = COALESCE(?, name), bio = COALESCE(?, bio), skills = COALESCE(?, skills) WHERE id = ?`,
-        [name, bio, skills, userId],
+        [name || null, bio || null, skills || null, userId],
         function (err) {
             if (err) return res.status(500).json({ error: 'Database error' });
             res.json({ message: 'Profile updated successfully' });

@@ -5,7 +5,7 @@ import api from '../utils/api';
 import './Dashboard.css'; // Shared CSS for Admin/Employer dashboards
 
 const EmployerDashboard = () => {
-    const { user, loading: authLoading } = useContext(AuthContext);
+    const { user, setUser, loading: authLoading } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [jobs, setJobs] = useState([]);
@@ -158,21 +158,23 @@ const EmployerDashboard = () => {
             // Actually, I'll just use the /profile endpoint for text and maybe a new one for logo?
             // Or I can add multer to /profile.
 
-            await api.put('/auth/profile', { bio: companyBio });
+            await api.put('/auth/profile', { name: company, bio: companyBio });
 
             if (logoFile) {
                 const logoData = new FormData();
                 logoData.append('logo', logoFile);
-                // I need an endpoint for this. Let's add it to auth.js.
-                await api.put('/auth/logo', logoData, {
+                const logoRes = await api.put('/auth/logo', logoData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+                setUser(prev => ({ ...prev, logo_url: logoRes.data.logo_url }));
             }
 
+            setUser(prev => ({ ...prev, name: company, bio: companyBio }));
             setProfileMessage('Company profile updated successfully!');
             setLogoFile(null);
         } catch (error) {
-            setProfileMessage('Failed to update company profile.');
+            const errorMsg = error.response?.data?.error || error.message || 'Failed to update company profile.';
+            setProfileMessage(`Failed: ${errorMsg}`);
         } finally {
             setUpdatingProfile(false);
         }
