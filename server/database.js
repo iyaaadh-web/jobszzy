@@ -143,6 +143,15 @@ db.serialize(() => {
             console.log('Employer user seeded.');
         }
     });
+    db.run(`CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT DEFAULT 'info',
+        is_read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`, (err) => { if (err) console.error('Error creating notifications table:', err.message); });
 });
 
 module.exports = db;

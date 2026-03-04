@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import './JobDetails.css';
 

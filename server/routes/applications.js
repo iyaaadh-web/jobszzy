@@ -30,7 +30,21 @@ router.post('/', verifyToken, (req, res) => {
                 [job_id, seeker_id, cover_letter, user.cv_url],
                 function (err) {
                     if (err) return res.status(500).json({ error: 'Database error' });
-                    res.status(201).json({ message: 'Application submitted successfully', id: this.lastID });
+
+                    const appId = this.lastID;
+
+                    // NOTIFY EMPLOYER
+                    db.get('SELECT employer_id, title FROM jobs WHERE id = ?', [job_id], (err, job) => {
+                        if (!err && job) {
+                            const message = `New application received for "${job.title}" from ${req.user.name || 'a job seeker'}.`;
+                            db.run(
+                                'INSERT INTO notifications (user_id, message, type) VALUES (?, ?, ?)',
+                                [job.employer_id, message, 'application']
+                            );
+                        }
+                    });
+
+                    res.status(201).json({ message: 'Application submitted successfully', id: appId });
                 }
             );
         });
