@@ -64,6 +64,11 @@ const Companies = () => {
                                     )}
                                 </div>
                                 <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{company.name}</h3>
+                                {company.bio && (
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                                        {company.bio}
+                                    </p>
+                                )}
                                 <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
                                     <span className="badge">Employer</span>
                                 </div>

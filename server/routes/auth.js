@@ -135,7 +135,7 @@ router.post('/reset-password', async (req, res) => {
 
 // Get current user details from token
 router.get('/me', require('../middleware/auth').verifyToken, (req, res) => {
-    db.get(`SELECT id, name, email, role, logo_url, cv_url FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+    db.get(`SELECT id, name, email, role, logo_url, cv_url, bio, skills FROM users WHERE id = ?`, [req.user.id], (err, user) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
@@ -160,9 +160,27 @@ router.put('/cv', require('../middleware/auth').verifyToken, upload.single('cv')
     });
 });
 
+// Update Logo for employer
+router.put('/logo', require('../middleware/auth').verifyToken, upload.single('logo'), (req, res) => {
+    if (req.user.role !== 'employer' && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Only employers and admins can update logos' });
+    }
+
+    if (!req.file) {
+        return res.status(400).json({ error: 'No logo file provided' });
+    }
+
+    const logo_url = `/uploads/${req.file.filename}`;
+
+    db.run(`UPDATE users SET logo_url = ? WHERE id = ?`, [logo_url, req.user.id], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ message: 'Logo updated successfully', logo_url });
+    });
+});
+
 // Get all companies
 router.get('/companies', (req, res) => {
-    db.all(`SELECT id, name, logo_url FROM users WHERE role = 'employer'`, [], (err, companies) => {
+    db.all(`SELECT id, name, logo_url, bio FROM users WHERE role = 'employer'`, [], (err, companies) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(companies);
     });
@@ -170,7 +188,7 @@ router.get('/companies', (req, res) => {
 
 // Get all talent (Job Seekers) - Protected for Employers/Admins
 router.get('/talent', require('../middleware/auth').verifyToken, require('../middleware/auth').isEmployerOrAdmin, (req, res) => {
-    db.all(`SELECT id, name, email, cv_url FROM users WHERE role = 'seeker'`, [], (err, talent) => {
+    db.all(`SELECT id, name, email, cv_url, bio, skills FROM users WHERE role = 'seeker'`, [], (err, talent) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(talent);
     });
@@ -178,12 +196,12 @@ router.get('/talent', require('../middleware/auth').verifyToken, require('../mid
 
 // Update Profile
 router.put('/profile', require('../middleware/auth').verifyToken, (req, res) => {
-    const { name, logo_url, cv_url } = req.body;
+    const { name, bio, skills } = req.body;
     const userId = req.user.id;
 
     db.run(
-        `UPDATE users SET name = COALESCE(?, name), logo_url = COALESCE(?, logo_url), cv_url = COALESCE(?, cv_url) WHERE id = ?`,
-        [name, logo_url, cv_url, userId],
+        `UPDATE users SET name = COALESCE(?, name), bio = COALESCE(?, bio), skills = COALESCE(?, skills) WHERE id = ?`,
+        [name, bio, skills, userId],
         function (err) {
             if (err) return res.status(500).json({ error: 'Database error' });
             res.json({ message: 'Profile updated successfully' });

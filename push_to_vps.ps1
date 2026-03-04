@@ -7,7 +7,8 @@ Write-Host "--- 1. Packaging local changes ---" -ForegroundColor Cyan
 tar -czf project.tar.gz server public src index.html package.json package-lock.json vite.config.js nginx.conf .env .env.example
 
 Write-Host "--- 2. Uploading to VPS ---" -ForegroundColor Cyan
-scp project.tar.gz "root@${VPS_IP}:${APP_DIR}/"
+# Added -o ConnectTimeout and -o ServerAliveInterval to prevent timeouts
+scp -o ConnectTimeout=30 -o ServerAliveInterval=60 project.tar.gz "root@${VPS_IP}:${APP_DIR}/"
 
 Write-Host "--- 3. Extracting and Restarting on VPS ---" -ForegroundColor Cyan
 $commands = @(
@@ -31,7 +32,7 @@ $commands = @(
     "pm2 status jobszzy"
 ) -join " && "
 
-ssh root@$VPS_IP "$commands"
+ssh -o ConnectTimeout=30 -o ServerAliveInterval=60 root@$VPS_IP "$commands"
 
 Write-Host "--- Deployment Complete! ---" -ForegroundColor Green
 Remove-Item project.tar.gz -ErrorAction SilentlyContinue

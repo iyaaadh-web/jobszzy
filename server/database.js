@@ -45,6 +45,18 @@ db.serialize(() => {
                         else console.log('Migrated: Added cv_url to users table.');
                     });
                 }
+                if (!columnNames.includes('bio')) {
+                    db.run("ALTER TABLE users ADD COLUMN bio TEXT", (err) => {
+                        if (err) console.error('Error adding bio:', err.message);
+                        else console.log('Migrated: Added bio to users table.');
+                    });
+                }
+                if (!columnNames.includes('skills')) {
+                    db.run("ALTER TABLE users ADD COLUMN skills TEXT", (err) => {
+                        if (err) console.error('Error adding skills:', err.message);
+                        else console.log('Migrated: Added skills to users table.');
+                    });
+                }
             });
         }
     });

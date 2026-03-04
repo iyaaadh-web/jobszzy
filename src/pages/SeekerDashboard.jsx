@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import api from '../utils/api';
 import './Dashboard.css';
 
 const SeekerDashboard = () => {
@@ -9,6 +10,11 @@ const SeekerDashboard = () => {
     const [loading, setLoading] = useState(false);
     const [applications, setApplications] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    // Profile State
+    const [bio, setBio] = useState(user?.bio || '');
+    const [skills, setSkills] = useState(user?.skills || '');
+    const [updatingProfile, setUpdatingProfile] = useState(false);
 
     if (!user) return <Navigate to="/login" />;
     if (user.role !== 'seeker') return <Navigate to="/" />;
@@ -50,6 +56,22 @@ const SeekerDashboard = () => {
         }
     };
 
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setUpdatingProfile(true);
+        setMessage({ type: '', text: '' });
+
+        try {
+            await api.put('/auth/profile', { bio, skills });
+            setMessage({ type: 'success', text: 'Profile updated successfully!' });
+            // The AuthContext might not have the updated bio/skills until refresh, but user sees it in prompt
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Failed to update profile.' });
+        } finally {
+            setUpdatingProfile(false);
+        }
+    };
+
     return (
         <div className="container dashboard-container" style={{ paddingTop: '100px', minHeight: 'calc(100vh - 80px)' }}>
             <h1 className="dashboard-title">Job Seeker Dashboard</h1>
@@ -57,8 +79,38 @@ const SeekerDashboard = () => {
             <div className="dashboard-card glass">
                 <h2 className="card-title">My Profile</h2>
                 <div style={{ marginBottom: '2rem' }}>
-                    <p><strong>Name:</strong> {user.name}</p>
-                    <p><strong>Email:</strong> {user.email}</p>
+                    <div className="form-row">
+                        <div className="form-group flex-1">
+                            <p><strong>Name:</strong> {user.name}</p>
+                            <p><strong>Email:</strong> {user.email}</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleUpdateProfile} style={{ marginTop: '1.5rem' }}>
+                        <div className="form-group">
+                            <label>Professional Bio</label>
+                            <textarea
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                placeholder="Describe your experience and career goals..."
+                                rows="4"
+                                style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-md)', padding: '1rem', border: '1px solid var(--card-border)', color: 'white' }}
+                            ></textarea>
+                        </div>
+                        <div className="form-group">
+                            <label>Skills (Comma separated)</label>
+                            <input
+                                type="text"
+                                value={skills}
+                                onChange={(e) => setSkills(e.target.value)}
+                                placeholder="e.g. React, Node.js, Project Management"
+                                style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-md)', padding: '0.75rem', border: '1px solid var(--card-border)', color: 'white' }}
+                            />
+                        </div>
+                        <button type="submit" className="btn-primary" disabled={updatingProfile} style={{ marginTop: '0.5rem' }}>
+                            {updatingProfile ? 'Saving...' : 'Save Profile'}
+                        </button>
+                    </form>
                 </div>
 
                 <h3 className="card-title">Curriculum Vitae (CV)</h3>

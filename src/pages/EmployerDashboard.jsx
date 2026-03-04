@@ -25,6 +25,12 @@ const EmployerDashboard = () => {
     const [applicants, setApplicants] = useState([]);
     const [loadingApplicants, setLoadingApplicants] = useState(false);
 
+    // Company Profile State
+    const [companyBio, setCompanyBio] = useState(user?.bio || '');
+    const [logoFile, setLogoFile] = useState(null);
+    const [updatingProfile, setUpdatingProfile] = useState(false);
+    const [profileMessage, setProfileMessage] = useState('');
+
     useEffect(() => {
         if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
             navigate('/login');
@@ -130,11 +136,46 @@ const EmployerDashboard = () => {
         }
     };
 
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setUpdatingProfile(true);
+        setProfileMessage('');
+
+        try {
+            // If there's a logo file, we use FormData. Otherwise just regular JSON.
+            // But let's check if the existing /profile endpoint handles files.
+            // Looking at auth.js, /profile only handled JSON.
+            // I should add a dedicated logo upload or update /profile.
+            // Let's check auth.js /profile again. It COALESCEn.
+            // I'll update auth.js to handle file upload for profile if I need to.
+            // Actually, I'll just use the /profile endpoint for text and maybe a new one for logo?
+            // Or I can add multer to /profile.
+
+            await api.put('/auth/profile', { bio: companyBio });
+
+            if (logoFile) {
+                const logoData = new FormData();
+                logoData.append('logo', logoFile);
+                // I need an endpoint for this. Let's add it to auth.js.
+                await api.put('/auth/logo', logoData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
+
+            setProfileMessage('Company profile updated successfully!');
+            setLogoFile(null);
+        } catch (error) {
+            setProfileMessage('Failed to update company profile.');
+        } finally {
+            setUpdatingProfile(false);
+        }
+    };
+
     if (loading) return <div className="container dashboard-container">Loading dashboard...</div>;
 
     return (
         <div className="dashboard-container container animate-fade-in">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <div>
                         <h1>Employer Dashboard</h1>
@@ -144,6 +185,44 @@ const EmployerDashboard = () => {
                         Search Talent Pool
                     </button>
                 </div>
+            </div>
+
+            <div className="dashboard-card glass" style={{ marginBottom: '2rem', padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
+                <h2>Company Profile</h2>
+                {profileMessage && (
+                    <div className={`alert ${profileMessage.includes('Failed') ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: '1.5rem' }}>
+                        {profileMessage}
+                    </div>
+                )}
+                <form onSubmit={handleUpdateProfile}>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                        <label>Company Logo</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: '0.5rem' }}>
+                            {user.logo_url && !logoFile && (
+                                <img src={user.logo_url} alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setLogoFile(e.target.files[0])}
+                                style={{ flex: 1, background: 'rgba(255, 255, 255, 0.05)', padding: '0.5rem', borderRadius: 'var(--radius-md)', color: 'white' }}
+                            />
+                        </div>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                        <label>Company Description / About Us</label>
+                        <textarea
+                            value={companyBio}
+                            onChange={(e) => setCompanyBio(e.target.value)}
+                            placeholder="Tell potential candidates about your company mission, culture, and what you do..."
+                            rows="4"
+                            style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-md)', padding: '1rem', border: '1px solid var(--card-border)', color: 'white' }}
+                        ></textarea>
+                    </div>
+                    <button type="submit" className="btn-primary" disabled={updatingProfile}>
+                        {updatingProfile ? 'Saving...' : 'Save Company Profile'}
+                    </button>
+                </form>
             </div>
 
             <div className="dashboard-grid">

@@ -96,6 +96,23 @@ const TalentSearch = () => {
                                 <div>
                                     <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{person.name}</h3>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{person.email}</p>
+
+                                    {person.bio && (
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '0.75rem', maxWidth: '500px' }}>
+                                            {person.bio}
+                                        </p>
+                                    )}
+
+                                    {person.skills && (
+                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                                            {person.skills.split(',').map((skill, i) => (
+                                                <span key={i} className="badge" style={{ fontSize: '0.7rem', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '0.2rem 0.6rem', borderRadius: '10px' }}>
+                                                    {skill.trim()}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <span className="badge badge-seeker" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }}>Job Seeker</span>
                                 </div>
                                 <div>
