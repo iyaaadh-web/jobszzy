@@ -24,7 +24,30 @@ db.serialize(() => {
         role TEXT DEFAULT 'seeker', 
         logo_url TEXT,
         cv_url TEXT
-    )`, (err) => { if (err) console.error('Error creating users table:', err.message); });
+    )`, (err) => {
+        if (err) {
+            console.error('Error creating users table:', err.message);
+        } else {
+            // MIGRATION: Check if logo_url and cv_url exist (SQLite doesn't add them automatically if table exists)
+            db.all("PRAGMA table_info(users)", (err, columns) => {
+                if (err) return console.error('Error checking table_info:', err.message);
+
+                const columnNames = columns.map(c => c.name);
+                if (!columnNames.includes('logo_url')) {
+                    db.run("ALTER TABLE users ADD COLUMN logo_url TEXT", (err) => {
+                        if (err) console.error('Error adding logo_url:', err.message);
+                        else console.log('Migrated: Added logo_url to users table.');
+                    });
+                }
+                if (!columnNames.includes('cv_url')) {
+                    db.run("ALTER TABLE users ADD COLUMN cv_url TEXT", (err) => {
+                        if (err) console.error('Error adding cv_url:', err.message);
+                        else console.log('Migrated: Added cv_url to users table.');
+                    });
+                }
+            });
+        }
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -114,6 +114,25 @@ router.post('/login', (req, res) => {
     });
 });
 
+// FORGOT PASSWORD / RESET (Simplified for prototype)
+router.post('/reset-password', async (req, res) => {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) return res.status(400).json({ error: 'Email and new password are required' });
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(newPassword, salt);
+
+        db.run(`UPDATE users SET password_hash = ? WHERE email = ?`, [hash, email], function (err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+            res.json({ message: 'Password reset successfully. You can now log in.' });
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Get current user details from token
 router.get('/me', require('../middleware/auth').verifyToken, (req, res) => {
     db.get(`SELECT id, name, email, role, logo_url, cv_url FROM users WHERE id = ?`, [req.user.id], (err, user) => {
