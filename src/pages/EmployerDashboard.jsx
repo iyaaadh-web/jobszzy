@@ -39,7 +39,7 @@ const EmployerDashboard = () => {
     useEffect(() => {
         if (authLoading) return;
         if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
-            navigate('/login');
+            navigate('/login', { replace: true });
             return;
         }
 
@@ -229,7 +229,6 @@ const EmployerDashboard = () => {
                                 color: 'white',
                                 cursor: 'pointer'
                             }}
-                            disabled={user.role !== 'admin' && user.subscription_status !== 'active'}
                         >
                             Access Talent Pool
                         </button>

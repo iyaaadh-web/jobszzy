@@ -67,7 +67,7 @@ const Pricing = () => {
                 <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading plans...</div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                    {plans.map(plan => (
+                    {Array.isArray(plans) && plans.map(plan => (
                         <div key={plan.id} className="glass card-hover" style={{ padding: '2.5rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{plan.name}</h3>
                             <div style={{ marginBottom: '2rem' }}>
@@ -75,7 +75,7 @@ const Pricing = () => {
                                 <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>MVR /month</span>
                             </div>
                             <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem', textAlign: 'left', flex: 1 }}>
-                                {plan.features.map((feature, idx) => (
+                                {Array.isArray(plan.features) && plan.features.map((feature, idx) => (
                                     <li key={idx} style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                         {feature}

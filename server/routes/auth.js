@@ -186,20 +186,11 @@ router.get('/companies', (req, res) => {
     });
 });
 
-// Get all talent (Job Seekers) - Protected for Employers/Admins with active subscription
+// Get all talent (Job Seekers) - Protected for Employers/Admins
 router.get('/talent', require('../middleware/auth').verifyToken, require('../middleware/auth').isEmployerOrAdmin, (req, res) => {
-    // Check if employer has an active subscription (Admins always allowed)
-    db.get('SELECT role, subscription_status FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    db.all(`SELECT id, name, email, cv_url, bio, skills FROM users WHERE role = 'seeker'`, [], (err, talent) => {
         if (err) return res.status(500).json({ error: 'Database error' });
-
-        if (user.role !== 'admin' && user.subscription_status !== 'active') {
-            return res.status(403).json({ error: 'Access denied. Active subscription required.' });
-        }
-
-        db.all(`SELECT id, name, email, cv_url, bio, skills FROM users WHERE role = 'seeker'`, [], (err, talent) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json(talent);
-        });
+        res.json(talent);
     });
 });
 

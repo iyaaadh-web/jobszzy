@@ -17,8 +17,8 @@ const SeekerDashboard = () => {
     const [updatingProfile, setUpdatingProfile] = useState(false);
 
     if (authLoading) return <div className="container dashboard-container">Loading...</div>;
-    if (!user) return <Navigate to="/login" />;
-    if (user.role !== 'seeker') return <Navigate to="/" />;
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role !== 'seeker') return <Navigate to="/" replace />;
 
     const fetchApplications = async () => {
         try {

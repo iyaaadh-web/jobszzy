@@ -5,7 +5,7 @@ import api from '../utils/api';
 import './Dashboard.css';
 
 const AdminDashboard = () => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
@@ -18,8 +18,9 @@ const AdminDashboard = () => {
     const [approving, setApproving] = useState(null);
 
     useEffect(() => {
+        if (authLoading) return;
         if (!user || user.role !== 'admin') {
-            navigate('/login');
+            navigate('/login', { replace: true });
             return;
         }
 
