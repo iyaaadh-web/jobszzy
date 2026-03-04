@@ -20,6 +20,8 @@ import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import ForgotPassword from './pages/ForgotPassword';
+import InternshipPortal from './pages/InternshipPortal';
+import EmployerReviews from './pages/EmployerReviews';
 import './App.css';
 
 function App() {
@@ -58,6 +60,8 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/internships" element={<InternshipPortal />} />
+            <Route path="/reviews" element={<EmployerReviews />} />
           </Routes>
           <footer className="footer container">
             <div className="footer-content glass">

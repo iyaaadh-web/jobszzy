@@ -43,6 +43,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/public', require('./routes/public'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // Root route for sanity check
 app.get('/api/health', (req, res) => {

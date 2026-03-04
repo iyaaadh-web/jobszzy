@@ -12,10 +12,13 @@ const AdminDashboard = () => {
     const [jobs, setJobs] = useState([]);
     const [pricing, setPricing] = useState([]);
     const [pendingPayments, setPendingPayments] = useState([]);
+    const [stats, setStats] = useState({ employers: 0, seekers: 0, jobs: 0, applications: 0, pending_subscriptions: 0 });
+    const [pendingReviews, setPendingReviews] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('users');
+    const [activeTab, setActiveTab] = useState('overview');
     const [saving, setSaving] = useState(false);
     const [approving, setApproving] = useState(null);
+    const [reviewing, setReviewing] = useState(null);
 
     useEffect(() => {
         if (authLoading) return;
@@ -26,16 +29,20 @@ const AdminDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const [usersRes, jobsRes, pricingRes, pendingRes] = await Promise.all([
+                const [usersRes, jobsRes, pricingRes, pendingRes, statsRes, reviewsRes] = await Promise.all([
                     api.get('/admin/users'),
                     api.get('/admin/jobs'),
                     api.get('/admin/settings/pricing_plans'),
-                    api.get('/admin/subscriptions/pending')
+                    api.get('/admin/subscriptions/pending'),
+                    api.get('/admin/stats'),
+                    api.get('/admin/reviews/pending')
                 ]);
                 setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
                 setJobs(Array.isArray(jobsRes.data) ? jobsRes.data : []);
                 setPricing(Array.isArray(pricingRes.data) ? pricingRes.data : []);
                 setPendingPayments(Array.isArray(pendingRes.data) ? pendingRes.data : []);
+                setStats(statsRes.data || {});
+                setPendingReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
             } catch (err) {
                 console.error("Failed to fetch admin data");
             } finally {
@@ -55,7 +62,6 @@ const AdminDashboard = () => {
             try {
                 await api.delete(`/admin/users/${userId}`);
                 setUsers(users.filter(u => u.id !== userId));
-                // Also remove their jobs from the local state
                 setJobs(jobs.filter(j => j.employer_id !== userId));
             } catch (err) {
                 alert('Failed to delete user');
@@ -132,7 +138,6 @@ const AdminDashboard = () => {
         try {
             await api.put(`/admin/subscriptions/${userId}/approve`);
             setPendingPayments(pendingPayments.filter(p => p.id !== userId));
-            // Update user in the local users list if they are there
             setUsers(users.map(u => u.id === userId ? { ...u, subscription_status: 'active' } : u));
             alert('Subscription approved successfully!');
         } catch (err) {
@@ -140,6 +145,27 @@ const AdminDashboard = () => {
         } finally {
             setApproving(null);
         }
+    };
+
+    const handleModerateReview = async (reviewId, action) => {
+        setReviewing(reviewId);
+        try {
+            if (action === 'approve') {
+                await api.put(`/admin/reviews/${reviewId}/approve`);
+            } else {
+                await api.delete(`/admin/reviews/${reviewId}`);
+            }
+            setPendingReviews(pendingReviews.filter(r => r.id !== reviewId));
+            alert(`Review ${action}d successfully!`);
+        } catch (err) {
+            alert(`Failed to ${action} review`);
+        } finally {
+            setReviewing(null);
+        }
+    };
+
+    const renderStars = (rating) => {
+        return '★'.repeat(rating) + '☆'.repeat(5 - rating);
     };
 
     if (loading) return <div className="container dashboard-container">Loading admin panel...</div>;
@@ -152,6 +178,12 @@ const AdminDashboard = () => {
             </div>
 
             <div className="filters" style={{ marginBottom: '2rem' }}>
+                <button
+                    className={`filter-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('overview')}
+                >
+                    Overview
+                </button>
                 <button
                     className={`filter-btn ${activeTab === 'users' ? 'active' : ''}`}
                     onClick={() => setActiveTab('users')}
@@ -178,9 +210,150 @@ const AdminDashboard = () => {
                     Approvals ({pendingPayments.length})
                     {pendingPayments.length > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '10px' }}>!</span>}
                 </button>
+                <button
+                    className={`filter-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('reviews')}
+                    style={{ position: 'relative' }}
+                >
+                    Reviews ({pendingReviews.length})
+                    {pendingReviews.length > 0 && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#f59e0b', color: 'white', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '10px' }}>!</span>}
+                </button>
             </div>
 
             <div className="dashboard-main glass" style={{ width: '100%', gridColumn: 'span 2' }}>
+                {/* ===== OVERVIEW TAB ===== */}
+                {activeTab === 'overview' && (
+                    <div>
+                        <h2>Platform Overview</h2>
+                        <div className="stats-grid">
+                            <div className="stat-card glass" style={{ borderLeft: '4px solid #3b82f6' }}>
+                                <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-number">{stats.employers || 0}</div>
+                                    <div className="stat-label">Employers</div>
+                                </div>
+                            </div>
+                            <div className="stat-card glass" style={{ borderLeft: '4px solid #10b981' }}>
+                                <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-number">{stats.seekers || 0}</div>
+                                    <div className="stat-label">Job Seekers</div>
+                                </div>
+                            </div>
+                            <div className="stat-card glass" style={{ borderLeft: '4px solid #8b5cf6' }}>
+                                <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-number">{stats.jobs || 0}</div>
+                                    <div className="stat-label">Active Jobs</div>
+                                </div>
+                            </div>
+                            <div className="stat-card glass" style={{ borderLeft: '4px solid #f59e0b' }}>
+                                <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-number">{stats.applications || 0}</div>
+                                    <div className="stat-label">Applications</div>
+                                </div>
+                            </div>
+                            <div className="stat-card glass" style={{ borderLeft: '4px solid #ef4444' }}>
+                                <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-number">{stats.pending_subscriptions || 0}</div>
+                                    <div className="stat-label">Pending Approvals</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '2rem' }}>
+                            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>System Performance</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Avg. Jobs / Employer</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#3b82f6' }}>
+                                        {stats.employers ? (stats.jobs / stats.employers).toFixed(1) : '0'}
+                                    </div>
+                                </div>
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Avg. Applications / Job</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#10b981' }}>
+                                        {stats.jobs ? (stats.applications / stats.jobs).toFixed(1) : '0'}
+                                    </div>
+                                </div>
+                                <div className="glass" style={{ padding: '1.25rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Pending Reviews</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f59e0b' }}>
+                                        {pendingReviews.length}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ===== REVIEWS TAB ===== */}
+                {activeTab === 'reviews' && (
+                    <div>
+                        <h2>Review Moderation</h2>
+                        {pendingReviews.length === 0 ? (
+                            <p className="no-data" style={{ textAlign: 'center', padding: '3rem' }}>No pending reviews to moderate.</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {pendingReviews.map(review => (
+                                    <div key={review.id} className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                                            <div>
+                                                <div style={{ marginBottom: '0.5rem' }}>
+                                                    <strong style={{ color: '#3b82f6' }}>Employer:</strong> {review.employer_name || `ID #${review.employer_id}`}
+                                                </div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                                                    Submitted {new Date(review.created_at).toLocaleDateString()}
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                                    <span>Management: <span style={{ color: '#f59e0b' }}>{renderStars(review.management_rating)}</span></span>
+                                                    <span>Food: <span style={{ color: '#f59e0b' }}>{renderStars(review.food_rating)}</span></span>
+                                                    <span>Accommodation: <span style={{ color: '#f59e0b' }}>{renderStars(review.accommodation_rating)}</span></span>
+                                                    <span>Fairness: <span style={{ color: '#f59e0b' }}>{renderStars(review.fairness_rating)}</span></span>
+                                                    <span>Opportunities: <span style={{ color: '#f59e0b' }}>{renderStars(review.opportunities_rating)}</span></span>
+                                                </div>
+                                                {review.comment && (
+                                                    <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>"{review.comment}"</p>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                                                <button
+                                                    className="btn-primary"
+                                                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                                                    onClick={() => handleModerateReview(review.id, 'approve')}
+                                                    disabled={reviewing === review.id}
+                                                >
+                                                    {reviewing === review.id ? '...' : 'Approve'}
+                                                </button>
+                                                <button
+                                                    className="btn-delete"
+                                                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                                    onClick={() => handleModerateReview(review.id, 'reject')}
+                                                    disabled={reviewing === review.id}
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {activeTab === 'users' && (
                     <div>
                         <h2>Registered Users</h2>

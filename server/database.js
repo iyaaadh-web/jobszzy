@@ -75,6 +75,12 @@ db.serialize(() => {
                         else console.log('[MIGRATION SUCCESS] Added payment_slip_url');
                     });
                 }
+                if (!columnNames.includes('available_immediately')) {
+                    db.run("ALTER TABLE users ADD COLUMN available_immediately INTEGER DEFAULT 0", (err) => {
+                        if (err) console.error('[MIGRATION ERROR] available_immediately:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added available_immediately');
+                    });
+                }
             });
         }
     });
@@ -91,8 +97,39 @@ db.serialize(() => {
         pdf_url TEXT,
         posted_time TEXT,
         color TEXT DEFAULT '#3b82f6',
+        category TEXT DEFAULT 'general',
+        is_urgent INTEGER DEFAULT 0,
         FOREIGN KEY (employer_id) REFERENCES users(id) ON DELETE CASCADE
-    )`, (err) => { if (err) console.error('Error creating jobs table:', err.message); });
+    )`, (err) => {
+        if (err) console.error('Error creating jobs table:', err.message);
+        else {
+            db.all("PRAGMA table_info(jobs)", (err, columns) => {
+                const columnNames = columns.map(c => c.name);
+                if (!columnNames.includes('category')) {
+                    db.run("ALTER TABLE jobs ADD COLUMN category TEXT DEFAULT 'general'");
+                }
+                if (!columnNames.includes('is_urgent')) {
+                    db.run("ALTER TABLE jobs ADD COLUMN is_urgent INTEGER DEFAULT 0");
+                }
+            });
+        }
+    });
+
+    db.run(`CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employer_id INTEGER NOT NULL,
+        seeker_id INTEGER NOT NULL,
+        management_rating INTEGER,
+        food_rating INTEGER,
+        accommodation_rating INTEGER,
+        fairness_rating INTEGER,
+        opportunities_rating INTEGER,
+        comment TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employer_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (seeker_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

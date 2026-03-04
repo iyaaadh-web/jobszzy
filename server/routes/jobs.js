@@ -27,19 +27,25 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 
-// GET all jobs
+// GET all jobs (supports ?category= filter)
 router.get('/', (req, res) => {
-    db.all(
-        `SELECT jobs.*, users.logo_url 
+    const { category } = req.query;
+    let query = `SELECT jobs.*, users.logo_url 
          FROM jobs 
-         LEFT JOIN users ON jobs.employer_id = users.id 
-         ORDER BY jobs.id DESC`,
-        [],
-        (err, rows) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json(rows);
-        }
-    );
+         LEFT JOIN users ON jobs.employer_id = users.id`;
+    const params = [];
+
+    if (category) {
+        query += ` WHERE jobs.category = ?`;
+        params.push(category);
+    }
+
+    query += ` ORDER BY jobs.id DESC`;
+
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
 });
 
 // GET a specific job
@@ -60,22 +66,24 @@ router.get('/:id', (req, res) => {
 
 // POST a new job (Protected: Employer/Admin only, Handles PDF upload)
 router.post('/', verifyToken, isEmployerOrAdmin, upload.single('job_pdf'), (req, res) => {
-    const { title, company, location, type, salary, description, color } = req.body;
+    const { title, company, location, type, salary, description, color, category, is_urgent } = req.body;
     const employer_id = req.user.id;
 
     // Create a URL path for the file if it was uploaded
     const pdf_url = req.file ? `/uploads/${req.file.filename}` : null;
     const posted_time = 'Just now'; // Simplified for prototype
     const jobColor = color || '#3b82f6';
+    const jobCategory = category || 'general';
+    const urgentStatus = is_urgent ? 1 : 0;
 
     if (!title || !company || !location || !type) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
     db.run(
-        `INSERT INTO jobs (title, company, location, type, salary, description, employer_id, pdf_url, posted_time, color)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [title, company, location, type, salary, description, employer_id, pdf_url, posted_time, jobColor],
+        `INSERT INTO jobs (title, company, location, type, salary, description, employer_id, pdf_url, posted_time, color, category, is_urgent)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [title, company, location, type, salary, description, employer_id, pdf_url, posted_time, jobColor, jobCategory, urgentStatus],
         function (err) {
             if (err) return res.status(500).json({ error: 'Database error' });
             res.status(201).json({

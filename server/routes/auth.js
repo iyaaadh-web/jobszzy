@@ -135,7 +135,7 @@ router.post('/reset-password', async (req, res) => {
 
 // Get current user details from token
 router.get('/me', require('../middleware/auth').verifyToken, (req, res) => {
-    db.get(`SELECT id, name, email, role, logo_url, cv_url, bio, skills, plan_id, subscription_status FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+    db.get(`SELECT id, name, email, role, logo_url, cv_url, bio, skills, plan_id, subscription_status, available_immediately FROM users WHERE id = ?`, [req.user.id], (err, user) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
@@ -188,7 +188,7 @@ router.get('/companies', (req, res) => {
 
 // Get all talent (Job Seekers) - Protected for Employers/Admins
 router.get('/talent', require('../middleware/auth').verifyToken, require('../middleware/auth').isEmployerOrAdmin, (req, res) => {
-    db.all(`SELECT id, name, email, cv_url, bio, skills FROM users WHERE role = 'seeker'`, [], (err, talent) => {
+    db.all(`SELECT id, name, email, cv_url, bio, skills, available_immediately FROM users WHERE role = 'seeker'`, [], (err, talent) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(talent);
     });
@@ -196,12 +196,15 @@ router.get('/talent', require('../middleware/auth').verifyToken, require('../mid
 
 // Update Profile
 router.put('/profile', require('../middleware/auth').verifyToken, (req, res) => {
-    const { name, bio, skills } = req.body;
+    const { name, bio, skills, available_immediately } = req.body;
     const userId = req.user.id;
 
+    // Handle available_immediately: convert to 0/1 for SQLite
+    const availImm = available_immediately !== undefined ? (available_immediately ? 1 : 0) : null;
+
     db.run(
-        `UPDATE users SET name = COALESCE(?, name), bio = COALESCE(?, bio), skills = COALESCE(?, skills) WHERE id = ?`,
-        [name || null, bio || null, skills || null, userId],
+        `UPDATE users SET name = COALESCE(?, name), bio = COALESCE(?, bio), skills = COALESCE(?, skills), available_immediately = COALESCE(?, available_immediately) WHERE id = ?`,
+        [name || null, bio || null, skills || null, availImm, userId],
         function (err) {
             if (err) return res.status(500).json({ error: 'Database error' });
             res.json({ message: 'Profile updated successfully' });

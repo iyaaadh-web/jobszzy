@@ -81,4 +81,64 @@ router.put('/subscriptions/:id/approve', (req, res) => {
     });
 });
 
+// --- Review Moderation ---
+// Get all pending reviews
+router.get('/reviews/pending', (req, res) => {
+    db.all(
+        `SELECT r.*, u_emp.name as employer_name, u_seek.name as seeker_name
+         FROM reviews r
+         LEFT JOIN users u_emp ON r.employer_id = u_emp.id
+         LEFT JOIN users u_seek ON r.seeker_id = u_seek.id
+         WHERE r.status = 'pending'
+         ORDER BY r.created_at DESC`,
+        [],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json(rows);
+        }
+    );
+});
+
+// Approve a review
+router.put('/reviews/:id/approve', (req, res) => {
+    db.run(`UPDATE reviews SET status = 'approved' WHERE id = ?`, [req.params.id], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'Review not found' });
+        res.json({ message: 'Review approved successfully' });
+    });
+});
+
+// Delete (reject) a review
+router.delete('/reviews/:id', (req, res) => {
+    db.run(`DELETE FROM reviews WHERE id = ?`, [req.params.id], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'Review not found' });
+        res.json({ message: 'Review deleted successfully' });
+    });
+});
+
+// Get admin stats for analytics
+router.get('/stats', (req, res) => {
+    const stats = {};
+
+    const queries = [
+        { key: 'employers', query: "SELECT COUNT(*) as count FROM users WHERE role = 'employer'" },
+        { key: 'seekers', query: "SELECT COUNT(*) as count FROM users WHERE role = 'seeker'" },
+        { key: 'jobs', query: "SELECT COUNT(*) as count FROM jobs" },
+        { key: 'applications', query: "SELECT COUNT(*) as count FROM applications" },
+        { key: 'pending_subscriptions', query: "SELECT COUNT(*) as count FROM users WHERE subscription_status = 'pending'" }
+    ];
+
+    let completed = 0;
+    queries.forEach(q => {
+        db.get(q.query, [], (err, row) => {
+            if (!err) stats[q.key] = row.count;
+            completed++;
+            if (completed === queries.length) {
+                res.json(stats);
+            }
+        });
+    });
+});
+
 module.exports = router;
