@@ -6,8 +6,12 @@ const JobCard = ({ job }) => {
         <div className="job-card glass">
             <div className="job-header">
                 <div className="company-info">
-                    <div className="company-logo" style={{ background: job.color }}>
-                        {job.company.charAt(0)}
+                    <div className="company-logo" style={{ background: job.color, overflow: 'hidden' }}>
+                        {job.logo_url ? (
+                            <img src={job.logo_url} alt={job.company} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            job.company.charAt(0)
+                        )}
                     </div>
                     <div>
                         <h3 className="job-title">{job.title}</h3>

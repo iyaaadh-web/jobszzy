@@ -28,21 +28,31 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 // GET all jobs
-router.get('/', (req, res) => {
-    db.all(`SELECT * FROM jobs ORDER BY id DESC`, [], (err, rows) => {
+db.all(
+    `SELECT jobs.*, users.logo_url 
+         FROM jobs 
+         LEFT JOIN users ON jobs.employer_id = users.id 
+         ORDER BY jobs.id DESC`,
+    [],
+    (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows);
-    });
-});
+    }
+);
 
 // GET a specific job
-router.get('/:id', (req, res) => {
-    db.get(`SELECT * FROM jobs WHERE id = ?`, [req.params.id], (err, row) => {
+db.get(
+    `SELECT jobs.*, users.logo_url 
+         FROM jobs 
+         LEFT JOIN users ON jobs.employer_id = users.id 
+         WHERE jobs.id = ?`,
+    [req.params.id],
+    (err, row) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (!row) return res.status(404).json({ error: 'Job not found' });
         res.json(row);
-    });
-});
+    }
+);
 
 // POST a new job (Protected: Employer/Admin only, Handles PDF upload)
 router.post('/', verifyToken, isEmployerOrAdmin, upload.single('job_pdf'), (req, res) => {

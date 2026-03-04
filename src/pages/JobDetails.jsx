@@ -66,8 +66,12 @@ const JobDetails = () => {
             <div className="job-header-card glass animate-fade-in">
                 <div className="job-details-header">
                     <div className="job-details-company">
-                        <div className="job-details-logo" style={{ background: job.color || '#3b82f6' }}>
-                            {job.company.charAt(0)}
+                        <div className="job-details-logo" style={{ background: job.color || '#3b82f6', overflow: 'hidden' }}>
+                            {job.logo_url ? (
+                                <img src={job.logo_url} alt={job.company} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                job.company.charAt(0) || 'J'
+                            )}
                         </div>
                         <div>
                             <h1 className="job-details-title">{job.title}</h1>
