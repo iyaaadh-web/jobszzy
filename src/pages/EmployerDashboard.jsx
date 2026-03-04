@@ -21,6 +21,9 @@ const EmployerDashboard = () => {
     const [pdfFile, setPdfFile] = useState(null);
     const [posting, setPosting] = useState(false);
     const [message, setMessage] = useState('');
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [applicants, setApplicants] = useState([]);
+    const [loadingApplicants, setLoadingApplicants] = useState(false);
 
     useEffect(() => {
         if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
@@ -102,11 +105,25 @@ const EmployerDashboard = () => {
         }
     };
 
+    const fetchApplicants = async (jobId) => {
+        setLoadingApplicants(true);
+        setSelectedJob(jobId);
+        try {
+            const res = await api.get(`/applications/job/${jobId}`);
+            setApplicants(res.data);
+        } catch (err) {
+            console.error("Failed to fetch applicants");
+        } finally {
+            setLoadingApplicants(false);
+        }
+    };
+
     const handleDelete = async (jobId) => {
         if (window.confirm('Are you sure you want to delete this job posting?')) {
             try {
                 await api.delete(`/jobs/${jobId}`);
                 setJobs(jobs.filter(j => j.id !== jobId));
+                if (selectedJob === jobId) setSelectedJob(null);
             } catch (err) {
                 alert('Failed to delete job');
             }
@@ -211,14 +228,42 @@ const EmployerDashboard = () => {
                         ) : (
                             <ul className="posted-jobs-list">
                                 {jobs.map(job => (
-                                    <li key={job.id} className="posted-job-item">
+                                    <li key={job.id} className={`posted-job-item ${selectedJob === job.id ? 'active' : ''}`} onClick={() => fetchApplicants(job.id)}>
                                         <div className="job-item-info">
                                             <h4>{job.title}</h4>
                                             <span>{job.posted_time}</span>
                                         </div>
-                                        <button onClick={() => handleDelete(job.id)} className="btn-delete" title="Delete Job">
+                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(job.id); }} className="btn-delete" title="Delete Job">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                         </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    <div className="sidebar-widget glass animate-fade-in" style={{ marginTop: '1.5rem' }}>
+                        <h3>Applicants {selectedJob && `for Job #${selectedJob}`}</h3>
+                        {!selectedJob ? (
+                            <p className="no-data">Select a job to view applicants.</p>
+                        ) : loadingApplicants ? (
+                            <p className="no-data">Loading applicants...</p>
+                        ) : applicants.length === 0 ? (
+                            <p className="no-data">No one has applied for this job yet.</p>
+                        ) : (
+                            <ul className="applicants-list" style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
+                                {applicants.map(app => (
+                                    <li key={app.id} style={{ padding: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: '600' }}>{app.seeker_name}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{app.seeker_email}</div>
+                                            <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: 'var(--accent)' }}>Applied: {new Date(app.applied_at).toLocaleDateString()}</div>
+                                        </div>
+                                        {app.cv_url && (
+                                            <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                                                CV
+                                            </a>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
