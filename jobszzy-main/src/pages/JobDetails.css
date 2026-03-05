@@ -1,0 +1,205 @@
+.job-details-page {
+    padding-top: 120px;
+    padding-bottom: 60px;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 2rem;
+    transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+
+.job-header-card {
+    padding: 2.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+}
+
+.job-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.job-details-company {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.job-details-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.job-details-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.job-details-company-name {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.apply-btn-large {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+}
+
+.job-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--card-border);
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.meta-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.job-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.job-description-section {
+    padding: 2.5rem;
+    border-radius: var(--radius-lg);
+}
+
+.job-description-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.description-content {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.description-content p {
+    margin-bottom: 1.5rem;
+}
+
+.job-attachment {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--card-border);
+}
+
+.job-attachment h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.attachment-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+}
+
+.attachment-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.attachment-name {
+    font-weight: 500;
+}
+
+.job-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-card {
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+}
+
+.sidebar-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+@media (max-width: 992px) {
+    .job-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .job-details-title {
+        font-size: 2rem;
+    }
+
+    .job-details-header {
+        flex-direction: column;
+    }
+
+    .apply-btn-large {
+        width: 100%;
+    }
+}
