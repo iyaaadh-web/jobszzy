@@ -20,10 +20,8 @@ import TalentSearch from './pages/TalentSearch';
 import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import ForgotPassword from './pages/ForgotPassword';
-import InternshipPortal from './pages/InternshipPortal';
-import EmployerReviews from './pages/EmployerReviews';
 import TermsOfService from './pages/TermsOfService';
+import ResetPassword from './pages/ResetPassword';
 import CookieBanner from './components/CookieBanner';
 import './App.css';
 
@@ -65,6 +63,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/internships" element={<InternshipPortal />} />
               <Route path="/reviews" element={<EmployerReviews />} />
               <Route path="/terms" element={<TermsOfService />} />

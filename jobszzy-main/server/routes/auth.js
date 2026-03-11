@@ -142,27 +142,41 @@ router.post('/forgot-password', async (req, res) => {
             // For production, use these environment variables
             const transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST || "smtp.ethereal.email",
-                port: process.env.SMTP_PORT || 587,
+                port: parseInt(process.env.SMTP_PORT) || 587,
                 secure: process.env.SMTP_SECURE === 'true',
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
+                tls: {
+                    // Do not fail on invalid certs (common for some hosting providers)
+                    rejectUnauthorized: false
+                }
             });
 
-            let info = await transporter.sendMail({
-                from: process.env.SMTP_FROM || '"Jobszzy Support" <support@jobszzy.com>',
-                to: email,
-                subject: "Your Jobszzy Temporary Password",
-                text: `Hello ${user.name},\n\nYour temporary password is: ${tempPassword}\n\nPlease login with this password. You will be prompted to set a new password upon login.\n\nBest regards,\nThe Jobszzy Team`,
-            });
+            console.log(`[SMTP DEBUG] Attempting to send email via ${process.env.SMTP_HOST} port ${process.env.SMTP_PORT}`);
 
-            console.log('Recovery email sent to: %s', email);
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('Preview URL (Ethereal): %s', nodemailer.getTestMessageUrl(info));
-                res.json({ message: 'Temporary password sent to email', preview_url: nodemailer.getTestMessageUrl(info) });
-            } else {
-                res.json({ message: 'Temporary password sent to your email' });
+            try {
+                let info = await transporter.sendMail({
+                    from: process.env.SMTP_FROM || '"Jobszzy Support" <support@jobszzy.com>',
+                    to: email,
+                    subject: "Your Jobszzy Temporary Password",
+                    text: `Hello ${user.name},\n\nYour temporary password is: ${tempPassword}\n\nPlease login with this password. You will be prompted to set a new password upon login.\n\nBest regards,\nThe Jobszzy Team`,
+                });
+
+                console.log('Recovery email sent successfully to: %s', email);
+                if (process.env.NODE_ENV !== 'production') {
+                    console.log('Preview URL (Ethereal): %s', nodemailer.getTestMessageUrl(info));
+                    res.json({ message: 'Temporary password sent to email', preview_url: nodemailer.getTestMessageUrl(info) });
+                } else {
+                    res.json({ message: 'Temporary password sent to your email' });
+                }
+            } catch (smtpErr) {
+                console.error('[SMTP ERROR] Failed to send email:', smtpErr);
+                res.status(500).json({
+                    error: 'Failed to send email. If you are the admin, please check the server logs.',
+                    details: smtpErr.message
+                });
             }
         });
     });
