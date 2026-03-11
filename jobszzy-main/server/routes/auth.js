@@ -138,26 +138,32 @@ router.post('/forgot-password', async (req, res) => {
             if (err) return res.status(500).json({ error: 'Database error' });
 
             const nodemailer = require('nodemailer');
-            let testAccount = await nodemailer.createTestAccount();
-            let transporter = nodemailer.createTransport({
-                host: "smtp.ethereal.email",
-                port: 587,
-                secure: false,
-                auth: { user: testAccount.user, pass: testAccount.pass },
+
+            // For production, use these environment variables
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST || "smtp.ethereal.email",
+                port: process.env.SMTP_PORT || 587,
+                secure: process.env.SMTP_SECURE === 'true',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                },
             });
 
             let info = await transporter.sendMail({
-                from: '"Jobszzy Support" <support@jobszzy.com>',
+                from: process.env.SMTP_FROM || '"Jobszzy Support" <support@jobszzy.com>',
                 to: email,
                 subject: "Your Jobszzy Temporary Password",
-                text: `Hello ${user.name},\n\nYour temporary password is: ${tempPassword}\n\nPlease login and you will be prompted to reset it.`,
+                text: `Hello ${user.name},\n\nYour temporary password is: ${tempPassword}\n\nPlease login with this password. You will be prompted to set a new password upon login.\n\nBest regards,\nThe Jobszzy Team`,
             });
 
-            const link = nodemailer.getTestMessageUrl(info);
-            console.log('Sending recovery email to: %s', email);
-            console.log('Preview URL: %s', link);
-
-            res.json({ message: 'Temporary password sent to email', preview_url: link });
+            console.log('Recovery email sent to: %s', email);
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('Preview URL (Ethereal): %s', nodemailer.getTestMessageUrl(info));
+                res.json({ message: 'Temporary password sent to email', preview_url: nodemailer.getTestMessageUrl(info) });
+            } else {
+                res.json({ message: 'Temporary password sent to your email' });
+            }
         });
     });
 });
