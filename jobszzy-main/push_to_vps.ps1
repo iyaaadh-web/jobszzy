@@ -25,9 +25,12 @@ $commands = @(
     "npm rebuild",
     "npm run build",
     "cd server",
+    "mkdir -p uploads",
     "npm install",
     "npm rebuild",
-    "pm2 restart jobszzy || pm2 start server.js --name jobszzy",
+    "pm2 delete jobszzy || true",
+    "pm2 start server.js --name jobszzy",
+    "pm2 save",
     "sleep 2",
     "pm2 status jobszzy"
 ) -join " && "
