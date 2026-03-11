@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import './Auth.css';
 
 const ForgotPassword = () => {
-    const [step, setStep] = useState(1);
-    const [email, setEmail] = useState('');
+    const location = useLocation();
+    const [step, setStep] = useState(location.state?.fromLogin ? 2 : 1);
+    const [email, setEmail] = useState(location.state?.email || '');
     const [token, setToken] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [message, setMessage] = useState('');
@@ -57,6 +58,12 @@ const ForgotPassword = () => {
                 <p className="auth-subtitle">
                     {step === 1 ? 'Enter your email to receive a password reset token' : 'Enter your email, token, and a new password'}
                 </p>
+
+                {location.state?.tempPasswordAlert && (
+                    <div className="alert alert-warning" style={{ marginBottom: '1.5rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '10px', borderRadius: '5px' }}>
+                        You are using a temporary password. Please set a new password before logging in.
+                    </div>
+                )}
 
                 {message && <div className="alert alert-success" style={{ marginBottom: '1.5rem' }}>{message}</div>}
                 {error && <div className="alert alert-error" style={{ marginBottom: '1.5rem', color: '#ff4d4f', background: 'rgba(255, 77, 79, 0.1)', padding: '10px', borderRadius: '5px' }}>{error}</div>}

@@ -27,9 +27,14 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
+
+        if (res.data.requires_password_reset) {
+            return res.data;
+        }
+
         localStorage.setItem('token', res.data.token);
         setUser(res.data.user);
-        return res.data.user;
+        return res.data;
     };
 
     const register = async (name, email, password, role, logoFile = null) => {
