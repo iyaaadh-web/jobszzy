@@ -17,12 +17,8 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const resData = await login(email, password);
-            if (resData.requires_password_reset) {
-                navigate('/forgot-password', { state: { email, fromLogin: true, tempPasswordAlert: true } });
-            } else {
-                navigate('/'); // Redirect to home on success
-            }
+            await login(email, password);
+            navigate('/'); // Redirect to home on success
         } catch (err) {
             console.error('Login Error details:', err);
             const errorMessage = err.response?.data?.error || err.message || 'Login failed. Please check your credentials and try again.';

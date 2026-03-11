@@ -195,7 +195,15 @@ const EmployerDashboard = () => {
         }
     };
 
-
+    const handleDownloadData = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ ...user, jobs }, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "jobszzy_company_data.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
 
     const handleDeleteAccount = async () => {
         if (window.confirm('Are you ABSOLUTELY sure you want to delete your employer account? This action cannot be undone and all your jobs and data will be permanently removed.')) {
@@ -328,9 +336,12 @@ const EmployerDashboard = () => {
                 <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
                     <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Account Data & Privacy</h3>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Manage your company data. You can permanently delete your account.
+                        Manage your company data. You can download a copy of all information associated with your account, or permanently delete your account.
                     </p>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        <button type="button" onClick={handleDownloadData} className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                            📥 Download Data
+                        </button>
                         <button type="button" onClick={handleDeleteAccount} style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }} onMouseOver={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.1)' }} onMouseOut={(e) => { e.target.style.background = 'transparent' }}>
                             🗑️ Delete Account
                         </button>

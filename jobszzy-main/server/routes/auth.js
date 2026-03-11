@@ -163,23 +163,16 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // RESET TEMPORARY PASSWORD
-router.post('/reset-password', async (req, res) => {
-    const { email, token, newPassword } = req.body;
-    if (!email || !token || !newPassword) return res.status(400).json({ error: 'Email, token, and new password are required' });
+router.post('/reset-password', require('../middleware/auth').verifyToken, async (req, res) => {
+    const { newPassword } = req.body;
+    if (!newPassword) return res.status(400).json({ error: 'New password is required' });
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-        if (err || !user) return res.status(404).json({ error: 'User not found' });
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(newPassword, salt);
 
-        const isValidToken = await bcrypt.compare(token, user.password_hash);
-        if (!isValidToken) return res.status(400).json({ error: 'Invalid token or token expired' });
-
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(newPassword, salt);
-
-        db.run(`UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE id = ?`, [hash, user.id], function (err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({ message: 'Password reset successfully' });
-        });
+    db.run(`UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE id = ?`, [hash, req.user.id], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ message: 'Password reset successfully' });
     });
 });
 
