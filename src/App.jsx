@@ -23,6 +23,9 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import ForgotPassword from './pages/ForgotPassword';
 import InternshipPortal from './pages/InternshipPortal';
 import EmployerReviews from './pages/EmployerReviews';
+import TermsOfService from './pages/TermsOfService';
+import ResetPassword from './pages/ResetPassword';
+import CookieBanner from './components/CookieBanner';
 import './App.css';
 
 function App() {
@@ -43,6 +46,7 @@ function App() {
         <Router>
           <div className="app">
             <Header />
+            <CookieBanner />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -62,8 +66,10 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/internships" element={<InternshipPortal />} />
               <Route path="/reviews" element={<EmployerReviews />} />
+              <Route path="/terms" element={<TermsOfService />} />
             </Routes>
             <footer className="footer container">
               <div className="footer-content glass">
@@ -93,6 +99,7 @@ function App() {
                     <Link to="/about">About Us</Link>
                     <Link to="/contact">Contact</Link>
                     <Link to="/privacy">Privacy Policy</Link>
+                    <Link to="/terms">Terms of Service</Link>
                   </div>
                 </div>
               </div>

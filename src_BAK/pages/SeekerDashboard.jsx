@@ -107,19 +107,6 @@ const SeekerDashboard = () => {
         }
     };
 
-
-    const handleDeleteAccount = async () => {
-        if (window.confirm('Are you ABSOLUTELY sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.')) {
-            try {
-                await api.delete('/auth/me');
-                localStorage.removeItem('jobszzy_token');
-                window.location.href = '/';
-            } catch (err) {
-                setMessage({ type: 'error', text: 'Failed to delete account. Please try again later.' });
-            }
-        }
-    };
-
     return (
         <div className="container dashboard-container" style={{ paddingTop: '100px', minHeight: 'calc(100vh - 80px)' }}>
             <h1 className="dashboard-title">Job Seeker Dashboard</h1>
@@ -246,18 +233,6 @@ const SeekerDashboard = () => {
                                     {updatingProfile ? 'Saving...' : 'Save Profile'}
                                 </button>
                             </form>
-
-                            <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Account Safety</h3>
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                                    Manage your personal account. If you wish to permanently delete your account and all associated data, you can do so here.
-                                </p>
-                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                    <button onClick={handleDeleteAccount} style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }} onMouseOver={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.1)' }} onMouseOut={(e) => { e.target.style.background = 'transparent' }}>
-                                        🗑️ Delete My Account
-                                    </button>
-                                </div>
-                            </div>
                         </div>
 
                         <h3 className="card-title">Curriculum Vitae (CV)</h3>
@@ -337,7 +312,7 @@ const SeekerDashboard = () => {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

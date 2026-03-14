@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -28,7 +29,11 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({ storage: storage, fileFilter: fileFilter });
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 // Register a new user with optional logo upload
 router.post('/register', upload.single('logo'), async (req, res) => {
@@ -110,27 +115,147 @@ router.post('/login', (req, res) => {
         // Don't send the password hash back
         const { password_hash, ...userWithoutPassword } = user;
 
+        if (user.requires_password_reset === 1) {
+            return res.json({ token, user: userWithoutPassword, requires_password_reset: true });
+        }
+
         res.json({ token, user: userWithoutPassword });
     });
 });
 
-// FORGOT PASSWORD / RESET (Simplified for prototype)
-router.post('/reset-password', async (req, res) => {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ error: 'Email and new password are required' });
+// FORGOT PASSWORD
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
 
-    try {
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(newPassword, salt);
+    db.get('SELECT id, name FROM users WHERE email = ?', [email], async (err, user) => {
+        if (err || !user) {
+            // To prevent email enumeration, we can return success anyway
+            // but for this app, we'll return 404 for clarity as it currently does
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-        db.run(`UPDATE users SET password_hash = ? WHERE email = ?`, [hash, email], function (err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-            res.json({ message: 'Password reset successfully. You can now log in.' });
+        // Generate a 6-digit numeric code instead of a long token
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60000).toISOString(); // 15 mins expiry
+
+        // Clear any existing tokens for this email first
+        db.run('DELETE FROM password_resets WHERE email = ?', [email], (delErr) => {
+            if (delErr) console.error('Error deleting old tokens:', delErr);
+
+            db.run('INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)', [email, token, expiresAt], async (insErr) => {
+                if (insErr) {
+                    console.error('Error storing reset token:', insErr);
+                    return res.status(500).json({ error: 'Database error' });
+                }
+
+                const nodemailer = require('nodemailer');
+                const transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST || "smtp.hostinger.com",
+                    port: parseInt(process.env.SMTP_PORT) || 465,
+                    secure: process.env.SMTP_SECURE === 'true',
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS,
+                    },
+                    tls: {
+                        rejectUnauthorized: false
+                    },
+                    debug: true,
+                    logger: true
+                });
+
+                const resetUrl = `${process.env.FRONTEND_URL || 'https://jobszzy.com'}/reset-password?token=${token}&email=${email}`;
+                console.log(`[SMTP] Attempting reset email to ${email}. Link: ${resetUrl}`);
+
+                try {
+                    await transporter.sendMail({
+                        from: process.env.SMTP_FROM || `"Jobszzy" <support@jobszzy.com>`,
+                        to: email,
+                        subject: "Security Code for Jobszzy Password Reset",
+                        html: `
+                            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                                <h2 style="color: #3b82f6; text-align: center;">Password Reset Request</h2>
+                                <p>Hello ${user.name},</p>
+                                <p>You requested to reset your password. Please use the following 6-digit security code:</p>
+                                <div style="font-size: 32px; font-weight: bold; text-align: center; padding: 20px; background: #f3f4f6; border-radius: 8px; letter-spacing: 5px; color: #1f2937; margin: 20px 0;">
+                                    ${token}
+                                </div>
+                                <p>Enter this code on the reset page. This code is valid for <b>15 minutes</b>.</p>
+                                <p>If you didn't request this, please ignore this email.</p>
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                <p style="font-size: 12px; color: #6b7280; text-align: center;">The Jobszzy Team</p>
+                            </div>
+                        `,
+                    });
+
+                    console.log(`[SMTP] Success: Reset email sent to ${email}`);
+                    res.json({ message: 'Password reset link sent to your email' });
+                } catch (smtpErr) {
+                    console.error('[SMTP ERROR] Details:', smtpErr);
+                    res.status(500).json({
+                        error: 'Failed to send email. Please try again later.',
+                        code: smtpErr.code
+                    });
+                }
+            });
         });
-    } catch (e) {
-        res.status(500).json({ error: 'Server error' });
+    });
+});
+
+// VERIFY RESET TOKEN
+router.get('/verify-reset-token', (req, res) => {
+    const { email, token } = req.query;
+    if (!email || !token) return res.status(400).json({ error: 'Email and token are required' });
+
+    db.get('SELECT * FROM password_resets WHERE email = ? AND token = ?', [email, token], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(400).json({ error: 'Invalid reset link' });
+
+        const now = new Date();
+        const expiresAt = new Date(row.expires_at);
+
+        if (now > expiresAt) {
+            return res.status(400).json({ error: 'Reset link has expired' });
+        }
+
+        res.json({ message: 'Token is valid' });
+    });
+});
+
+// RESET PASSWORD (PUBLIC)
+router.post('/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ error: 'Email, token, and new password are required' });
     }
+
+    // Verify token again before resetting
+    db.get('SELECT * FROM password_resets WHERE email = ? AND token = ?', [email, token], async (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(400).json({ error: 'Invalid or expired reset link' });
+
+        const now = new Date();
+        if (now > new Date(row.expires_at)) {
+            return res.status(400).json({ error: 'Reset link has expired' });
+        }
+
+        try {
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(newPassword, salt);
+
+            db.run('UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE email = ?', [hash, email], function (err) {
+                if (err) return res.status(500).json({ error: 'Database error' });
+
+                // Delete the used token
+                db.run('DELETE FROM password_resets WHERE email = ?', [email]);
+
+                res.json({ message: 'Password reset successfully. You can now login with your new password.' });
+            });
+        } catch (error) {
+            res.status(500).json({ error: 'Server error during password hashing' });
+        }
+    });
 });
 
 // Get current user details from token
@@ -298,6 +423,16 @@ router.post('/confirm-payment', require('../middleware/auth').verifyToken, uploa
             });
         }
     );
+});
+
+// DELETE Account and Data
+router.delete('/me', require('../middleware/auth').verifyToken, (req, res) => {
+    // Delete the user and let SQLite ON DELETE CASCADE handle the rest (if configured properly).
+    // The tokens are stateless JWTs, so they will expire on their own. We just remove the user.
+    db.run(`DELETE FROM users WHERE id = ?`, [req.user.id], function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ message: 'Account and all associated data deleted successfully' });
+    });
 });
 
 module.exports = router;

@@ -17,8 +17,12 @@ const Login = () => {
         setLoading(true);
 
         try {
-            await login(email, password);
-            navigate('/'); // Redirect to home on success
+            const data = await login(email, password);
+            if (data.requires_password_reset) {
+                navigate('/reset-password');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             console.error('Login Error details:', err);
             const errorMessage = err.response?.data?.error || err.message || 'Login failed. Please check your credentials and try again.';

@@ -195,19 +195,6 @@ const EmployerDashboard = () => {
         }
     };
 
-
-    const handleDeleteAccount = async () => {
-        if (window.confirm('Are you ABSOLUTELY sure you want to delete your employer account? This action cannot be undone and all your jobs and data will be permanently removed.')) {
-            try {
-                await api.delete('/auth/me');
-                localStorage.removeItem('jobszzy_token');
-                window.location.href = '/';
-            } catch (err) {
-                setProfileMessage('Failed to delete account. Please try again later.');
-            }
-        }
-    };
-
     if (loading) return <div className="container dashboard-container">Loading dashboard...</div>;
 
     return (
@@ -319,22 +306,10 @@ const EmployerDashboard = () => {
                             style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-md)', padding: '1rem', border: '1px solid var(--card-border)', color: 'white' }}
                         ></textarea>
                     </div>
-                    <button type="submit" className="btn-primary" disabled={updatingProfile} style={{ marginTop: '0.5rem' }}>
+                    <button type="submit" className="btn-primary" disabled={updatingProfile}>
                         {updatingProfile ? 'Saving...' : 'Save Company Profile'}
                     </button>
                 </form>
-
-                <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Account Safety</h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Manage your company account. If you wish to permanently delete your account and all associated data, you can do so here.
-                    </p>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <button type="button" onClick={handleDeleteAccount} style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }} onMouseOver={(e) => { e.target.style.background = 'rgba(239, 68, 68, 0.1)' }} onMouseOut={(e) => { e.target.style.background = 'transparent' }}>
-                            🗑️ Delete Account
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <div className="dashboard-grid">

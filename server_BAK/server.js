@@ -3,8 +3,6 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') }); // Look 
 require('dotenv').config(); // Fallback to current directory
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 
 // ERROR HANDLING: Catch crashes before they happen
 process.on('uncaughtException', (err) => {
@@ -28,21 +26,6 @@ if (!fs.existsSync(uploadsDir)) {
 // Middleware
 app.use(cors()); // Allow frontend to talk to backend
 app.use(express.json()); // Parse JSON body
-
-// Security Middlewares
-app.use(helmet({
-    contentSecurityPolicy: false // Disable CSP for now so frontend build isn't blocked accidentally
-}));
-
-// Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // Increased limit to prevent 429 errors on management dashboard
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: "Too many requests from this IP, please try again"
-});
-app.use('/api/', limiter);
 
 // Serve static files from the uploads directory (for PDFs/Images)
 app.use('/uploads', express.static(uploadsDir));

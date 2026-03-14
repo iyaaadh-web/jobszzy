@@ -22,11 +22,16 @@ router.delete('/users/:id', (req, res) => {
         return res.status(400).json({ error: 'Cannot delete yourself' });
     }
 
-    // Jobs are cascadingly deleted by SQLite due to ON DELETE CASCADE
+    console.log(`[ADMIN ACTION] Admin ${req.user.email} is deleting user ID: ${userId}`);
+    // Jobs, applications, reviews, and notifications are cascadingly deleted by SQLite due to ON DELETE CASCADE
     db.run(`DELETE FROM users WHERE id = ?`, [userId], function (err) {
-        if (err) return res.status(500).json({ error: 'Database error' });
+        if (err) {
+            console.error(`[ADMIN ERROR] Failed to delete user ${userId}:`, err.message);
+            return res.status(500).json({ error: 'Database error: ' + err.message });
+        }
         if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-        res.json({ message: 'User deleted successfully' });
+        console.log(`[ADMIN SUCCESS] User ${userId} and all associated data have been permanently removed.`);
+        res.json({ message: 'User and all associated data deleted successfully' });
     });
 });
 

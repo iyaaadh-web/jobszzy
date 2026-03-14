@@ -5,6 +5,7 @@ import './Auth.css';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,13 +17,10 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const res = await api.post('/auth/forgot-password', { email });
+            const res = await api.post('/auth/reset-password', { email, newPassword });
             setMessage(res.data.message);
-            if (res.data.preview_url) {
-                console.log('Email preview (dev only):', res.data.preview_url);
-            }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to send reset email');
+            setError(err.response?.data?.error || 'Failed to reset password');
         } finally {
             setLoading(false);
         }
@@ -31,11 +29,12 @@ const ForgotPassword = () => {
     return (
         <div className="auth-container container">
             <div className="auth-card glass animate-fade-in">
-                <h2 className="auth-title">Forgot Password</h2>
-                <p className="auth-subtitle">Enter your email to receive a password reset link</p>
+                <h2 className="auth-title">Reset Password</h2>
+                <p className="auth-subtitle">Enter your email and a new password</p>
 
                 {message && <div className="alert alert-success" style={{ marginBottom: '1.5rem' }}>{message}</div>}
                 {error && <div className="auth-error">{error}</div>}
+
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
@@ -48,8 +47,19 @@ const ForgotPassword = () => {
                             required
                         />
                     </div>
+                    <div className="form-group">
+                        <label htmlFor="newPassword">New Password</label>
+                        <input
+                            type="password"
+                            id="newPassword"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                        />
+                    </div>
                     <button type="submit" className="btn-primary auth-btn" disabled={loading}>
-                        {loading ? 'Sending...' : 'Send Reset Link'}
+                        {loading ? 'Resetting...' : 'Reset Password'}
                     </button>
                 </form>
 

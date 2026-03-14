@@ -9,7 +9,6 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('seeker'); // Default to job seeker
     const [logoFile, setLogoFile] = useState(null);
-    const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -18,12 +17,6 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!agreedToTerms) {
-            setError('You must agree to the Terms of Service and Privacy Policy');
-            return;
-        }
-
         setError('');
         setLoading(true);
 
@@ -128,19 +121,6 @@ const Register = () => {
                             />
                         </div>
                     )}
-
-                    <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px', marginTop: '1rem', marginBottom: '1.5rem', display: 'flex' }}>
-                        <input
-                            type="checkbox"
-                            id="terms"
-                            checked={agreedToTerms}
-                            onChange={(e) => setAgreedToTerms(e.target.checked)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer', margin: 0 }}
-                        />
-                        <label htmlFor="terms" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', cursor: 'pointer', margin: 0 }}>
-                            I agree to the <Link to="/terms" target="_blank" style={{ color: 'var(--accent)' }}>Terms of Service</Link> and <Link to="/privacy" target="_blank" style={{ color: 'var(--accent)' }}>Privacy Policy</Link>
-                        </label>
-                    </div>
 
                     <button type="submit" className="btn-primary auth-btn" disabled={loading}>
                         {loading ? 'Creating account...' : 'Sign Up'}
