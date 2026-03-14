@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment and Data
+.env
+*.sqlite
+project.tar.gz
+update.tar.gz
+server/uploads/*
+!server/uploads/.gitkeep
