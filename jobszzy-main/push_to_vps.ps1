@@ -4,7 +4,8 @@ $APP_DIR = "/var/www/jobszzy"
 
 Write-Host "--- 1. Packaging local changes ---" -ForegroundColor Cyan
 # Using native Windows tar (standard in Win10/11)
-tar -czf project.tar.gz server public src index.html package.json package-lock.json vite.config.js nginx.conf .env .env.example
+# EXCLUDING .sqlite files so we don't overwrite the live production database!
+tar -czf project.tar.gz --exclude=*.sqlite server public src index.html package.json package-lock.json vite.config.js nginx.conf .env .env.example
 
 Write-Host "--- 2. Uploading to VPS ---" -ForegroundColor Cyan
 # Added -o ConnectTimeout and -o ServerAliveInterval to prevent timeouts

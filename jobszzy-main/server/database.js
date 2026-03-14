@@ -184,46 +184,17 @@ db.serialize(() => {
                     (err) => { if (err) console.error('Error seeding admin:', err.message); else console.log('Admin user seeded.'); }
                 );
             } else {
-                // Update password if needed or just confirm existence
-                db.run(`UPDATE users SET password_hash = ?, role = 'admin' WHERE email = ?`, [hash, 'sales@fasmala.com']);
-                console.log('Admin user verified/updated.');
+                // Confirm role is admin
+                if (row.role !== 'admin') {
+                    db.run(`UPDATE users SET role = 'admin' WHERE email = ?`, ['sales@fasmala.com']);
+                }
+                console.log('Admin user verified.');
             }
         } catch (e) {
             console.error('Bcrypt error during seeding:', e);
         }
     });
 
-    // Seed Demo Employer
-    db.get(`SELECT * FROM users WHERE email = ?`, ['employer@jobszzy.com'], async (err, row) => {
-        if (!row && !err) {
-            const salt = await bcrypt.genSalt(10);
-            const hash = await bcrypt.hash('employer123', salt);
-            db.run(`INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)`,
-                ['TechVision Inc.', 'employer@jobszzy.com', hash, 'employer']
-            );
-            console.log('Employer user seeded.');
-        }
-    });
-
-    // Seed Dummy Job Seekers for Talent Pool
-    const dummySeekers = [
-        { name: 'Ahmed Shahu', email: 'shahu@example.com', bio: 'Experienced Frontend Developer specializing in React and Vite.', skills: 'React, JavaScript, CSS, HTML' },
-        { name: 'Fathimath Rizna', email: 'rizna@example.com', bio: 'Digital Marketing specialist with 5 years of experience in SEO and Social Media.', skills: 'SEO, Content Writing, Marketing' },
-        { name: 'Ibrahim Ali', email: 'ibrahim@example.com', bio: 'Passionate Backend Engineer focused on Node.js and SQLite databases.', skills: 'Node.js, Express, SQL, Git' },
-        { name: 'Mariyam Saara', email: 'saara@example.com', bio: 'UX/UI Designer with a focus on creating modern Maldivian aesthetic designs.', skills: 'Figma, Adobe XD, UI Design' }
-    ];
-
-    dummySeekers.forEach(seeker => {
-        db.get(`SELECT * FROM users WHERE email = ?`, [seeker.email], async (err, row) => {
-            if (!row && !err) {
-                const salt = await bcrypt.genSalt(10);
-                const hash = await bcrypt.hash('password123', salt);
-                db.run(`INSERT INTO users (name, email, password_hash, role, bio, skills) VALUES (?, ?, ?, ?, ?, ?)`,
-                    [seeker.name, seeker.email, hash, 'seeker', seeker.bio, seeker.skills]
-                );
-            }
-        });
-    });
     db.run(`CREATE TABLE IF NOT EXISTS notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
