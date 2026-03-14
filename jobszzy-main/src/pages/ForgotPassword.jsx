@@ -32,7 +32,7 @@ const ForgotPassword = () => {
         <div className="auth-container container">
             <div className="auth-card glass animate-fade-in">
                 <h2 className="auth-title">Forgot Password</h2>
-                <p className="auth-subtitle">Enter your email to receive a temporary password</p>
+                <p className="auth-subtitle">Enter your email to receive a password reset link</p>
 
                 {message && <div className="alert alert-success" style={{ marginBottom: '1.5rem' }}>{message}</div>}
                 {error && <div className="auth-error">{error}</div>}
@@ -49,7 +49,7 @@ const ForgotPassword = () => {
                         />
                     </div>
                     <button type="submit" className="btn-primary auth-btn" disabled={loading}>
-                        {loading ? 'Sending...' : 'Get Temporary Password'}
+                        {loading ? 'Sending...' : 'Send Reset Link'}
                     </button>
                 </form>
 

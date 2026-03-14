@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -128,67 +129,125 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     db.get('SELECT id, name FROM users WHERE email = ?', [email], async (err, user) => {
-        if (err || !user) return res.status(404).json({ error: 'User not found' });
+        if (err || !user) {
+            // To prevent email enumeration, we can return success anyway
+            // but for this app, we'll return 404 for clarity as it currently does
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-        const tempPassword = Math.random().toString(36).slice(-8);
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(tempPassword, salt);
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour expiry
 
-        db.run('UPDATE users SET password_hash = ?, requires_password_reset = 1 WHERE id = ?', [hash, user.id], async (err) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
+        // Clear any existing tokens for this email first
+        db.run('DELETE FROM password_resets WHERE email = ?', [email], (delErr) => {
+            if (delErr) console.error('Error deleting old tokens:', delErr);
 
-            const nodemailer = require('nodemailer');
+            db.run('INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)', [email, token, expiresAt], async (insErr) => {
+                if (insErr) {
+                    console.error('Error storing reset token:', insErr);
+                    return res.status(500).json({ error: 'Database error' });
+                }
 
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || "smtp.hostinger.com",
-                port: parseInt(process.env.SMTP_PORT) || 465,
-                secure: process.env.SMTP_SECURE === 'true',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                },
-                tls: {
-                    rejectUnauthorized: false
-                },
-                debug: true, // Enable debug output
-                logger: true  // Log to console
+                const nodemailer = require('nodemailer');
+                const transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST || "smtp.hostinger.com",
+                    port: parseInt(process.env.SMTP_PORT) || 465,
+                    secure: process.env.SMTP_SECURE === 'true',
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS,
+                    },
+                    tls: {
+                        rejectUnauthorized: false
+                    },
+                    debug: true,
+                    logger: true
+                });
+
+                const resetUrl = `${process.env.FRONTEND_URL || 'https://jobszzy.com'}/reset-password?token=${token}&email=${email}`;
+                console.log(`[SMTP] Attempting reset email to ${email}. Link: ${resetUrl}`);
+
+                try {
+                    await transporter.sendMail({
+                        from: process.env.SMTP_FROM || `"Jobszzy" <support@jobszzy.com>`,
+                        to: email,
+                        subject: "Reset Your Jobszzy Password",
+                        html: `
+                            <h3>Hello ${user.name},</h3>
+                            <p>You requested a password reset for your Jobszzy account.</p>
+                            <p>Please click the link below to reset your password. This link is valid for 1 hour.</p>
+                            <p><a href="${resetUrl}" style="padding: 10px 20px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+                            <p>If you didn't request this, you can ignore this email.</p>
+                            <p>Best regards,<br>The Jobszzy Team</p>
+                        `,
+                    });
+
+                    console.log(`[SMTP] Success: Reset email sent to ${email}`);
+                    res.json({ message: 'Password reset link sent to your email' });
+                } catch (smtpErr) {
+                    console.error('[SMTP ERROR] Details:', smtpErr);
+                    res.status(500).json({
+                        error: 'Failed to send email. Please try again later.',
+                        code: smtpErr.code
+                    });
+                }
             });
-
-            console.log(`[SMTP] Attempting recovery email to ${email} via ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`);
-
-            try {
-                await transporter.sendMail({
-                    from: process.env.SMTP_FROM || `"Jobszzy" <support@jobszzy.com>`,
-                    to: email,
-                    subject: "Your Jobszzy Temporary Password",
-                    text: `Hello ${user.name},\n\nYour temporary password is: ${tempPassword}\n\nPlease login with this password. You will be prompted to set a new password upon login.\n\nBest regards,\nThe Jobszzy Team`,
-                });
-
-                console.log(`[SMTP] Success: Recovery email sent to ${email}`);
-                res.json({ message: 'Temporary password sent to your email' });
-            } catch (smtpErr) {
-                console.error('[SMTP ERROR] Details:', smtpErr);
-                res.status(500).json({
-                    error: 'Failed to send email. If you are the admin, please check the server logs.',
-                    code: smtpErr.code,
-                    command: smtpErr.command
-                });
-            }
         });
     });
 });
 
-// RESET TEMPORARY PASSWORD
-router.post('/reset-password', require('../middleware/auth').verifyToken, async (req, res) => {
-    const { newPassword } = req.body;
-    if (!newPassword) return res.status(400).json({ error: 'New password is required' });
+// VERIFY RESET TOKEN
+router.get('/verify-reset-token', (req, res) => {
+    const { email, token } = req.query;
+    if (!email || !token) return res.status(400).json({ error: 'Email and token are required' });
 
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(newPassword, salt);
-
-    db.run(`UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE id = ?`, [hash, req.user.id], function (err) {
+    db.get('SELECT * FROM password_resets WHERE email = ? AND token = ?', [email, token], (err, row) => {
         if (err) return res.status(500).json({ error: 'Database error' });
-        res.json({ message: 'Password reset successfully' });
+        if (!row) return res.status(400).json({ error: 'Invalid reset link' });
+
+        const now = new Date();
+        const expiresAt = new Date(row.expires_at);
+
+        if (now > expiresAt) {
+            return res.status(400).json({ error: 'Reset link has expired' });
+        }
+
+        res.json({ message: 'Token is valid' });
+    });
+});
+
+// RESET PASSWORD (PUBLIC)
+router.post('/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ error: 'Email, token, and new password are required' });
+    }
+
+    // Verify token again before resetting
+    db.get('SELECT * FROM password_resets WHERE email = ? AND token = ?', [email, token], async (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(400).json({ error: 'Invalid or expired reset link' });
+
+        const now = new Date();
+        if (now > new Date(row.expires_at)) {
+            return res.status(400).json({ error: 'Reset link has expired' });
+        }
+
+        try {
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(newPassword, salt);
+
+            db.run('UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE email = ?', [hash, email], function (err) {
+                if (err) return res.status(500).json({ error: 'Database error' });
+
+                // Delete the used token
+                db.run('DELETE FROM password_resets WHERE email = ?', [email]);
+
+                res.json({ message: 'Password reset successfully. You can now login with your new password.' });
+            });
+        } catch (error) {
+            res.status(500).json({ error: 'Server error during password hashing' });
+        }
     });
 });
 

@@ -204,6 +204,13 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`, (err) => { if (err) console.error('Error creating notifications table:', err.message); });
+
+    db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at DATETIME NOT NULL
+    )`, (err) => { if (err) console.error('Error creating password_resets table:', err.message); });
 });
 
 module.exports = db;
