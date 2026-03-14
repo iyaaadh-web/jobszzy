@@ -69,7 +69,7 @@ router.post('/register', upload.single('logo'), async (req, res) => {
                 }
 
                 // Generate token upon successful registration
-                const token = jwt.sign({ id: this.lastID, email, role: validRole }, JWT_SECRET, { expiresIn: '1d' });
+                const token = jwt.sign({ id: this.lastID, email, role: validRole }, JWT_SECRET, { expiresIn: '365d' });
                 console.log(`User registered successfully: ${email} (ID: ${this.lastID})`);
                 res.status(201).json({
                     message: 'User registered successfully',
@@ -110,7 +110,7 @@ router.post('/login', (req, res) => {
         }
 
         console.log(`Login successful for: ${email}`);
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '365d' });
 
         // Don't send the password hash back
         const { password_hash, ...userWithoutPassword } = user;
