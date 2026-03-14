@@ -10,6 +10,10 @@ tar -czf project.tar.gz --exclude=*.sqlite server public src index.html package.
 Write-Host "--- 2. Uploading to VPS ---" -ForegroundColor Cyan
 # Added -o ConnectTimeout and -o ServerAliveInterval to prevent timeouts
 scp -o ConnectTimeout=30 -o ServerAliveInterval=60 project.tar.gz "root@${VPS_IP}:${APP_DIR}/"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "CRITICAL ERROR: Upload failed. Please check your connection and try again." -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "--- 3. Extracting and Restarting on VPS ---" -ForegroundColor Cyan
 $commands = @(
