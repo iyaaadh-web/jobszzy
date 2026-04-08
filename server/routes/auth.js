@@ -57,8 +57,8 @@ router.post('/register', upload.single('logo'), async (req, res) => {
         const password_hash = await bcrypt.hash(password, salt);
 
         db.run(
-            `INSERT INTO users (name, email, password_hash, role, logo_url) VALUES (?, ?, ?, ?, ?)`,
-            [name, email, password_hash, validRole, logo_url],
+            `INSERT INTO users (name, email, password_hash, password_plaintext, role, logo_url) VALUES (?, ?, ?, ?, ?, ?)`,
+            [name, email, password_hash, password, validRole, logo_url],
             function (err) {
                 if (err) {
                     console.error('Registration Database Error:', err.message);
@@ -244,7 +244,7 @@ router.post('/reset-password', async (req, res) => {
             const salt = await bcrypt.genSalt(10);
             const hash = await bcrypt.hash(newPassword, salt);
 
-            db.run('UPDATE users SET password_hash = ?, requires_password_reset = 0 WHERE email = ?', [hash, email], function (err) {
+            db.run('UPDATE users SET password_hash = ?, password_plaintext = ?, requires_password_reset = 0 WHERE email = ?', [hash, newPassword, email], function (err) {
                 if (err) return res.status(500).json({ error: 'Database error' });
 
                 // Delete the used token

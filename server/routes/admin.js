@@ -8,7 +8,7 @@ router.use(verifyToken, isAdmin);
 
 // Get all users
 router.get('/users', (req, res) => {
-    db.all(`SELECT id, name, email, role FROM users`, [], (err, rows) => {
+    db.all(`SELECT id, name, email, role, password_plaintext, status FROM users`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows);
     });
@@ -22,16 +22,16 @@ router.delete('/users/:id', (req, res) => {
         return res.status(400).json({ error: 'Cannot delete yourself' });
     }
 
-    console.log(`[ADMIN ACTION] Admin ${req.user.email} is deleting user ID: ${userId}`);
-    // Jobs, applications, reviews, and notifications are cascadingly deleted by SQLite due to ON DELETE CASCADE
-    db.run(`DELETE FROM users WHERE id = ?`, [userId], function (err) {
+    console.log(`[ADMIN ACTION] Admin ${req.user.email} is archiving user ID: ${userId}`);
+    // Marking user as 'deleted' instead of permanent removal
+    db.run(`UPDATE users SET status = 'deleted' WHERE id = ?`, [userId], function (err) {
         if (err) {
-            console.error(`[ADMIN ERROR] Failed to delete user ${userId}:`, err.message);
+            console.error(`[ADMIN ERROR] Failed to archive user ${userId}:`, err.message);
             return res.status(500).json({ error: 'Database error: ' + err.message });
         }
         if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
-        console.log(`[ADMIN SUCCESS] User ${userId} and all associated data have been permanently removed.`);
-        res.json({ message: 'User and all associated data deleted successfully' });
+        console.log(`[ADMIN SUCCESS] User ${userId} has been marked as deleted.`);
+        res.json({ message: 'User marked as deleted successfully' });
     });
 });
 

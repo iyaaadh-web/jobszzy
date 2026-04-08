@@ -364,7 +364,9 @@ const AdminDashboard = () => {
                                         <th>ID</th>
                                         <th>Name / Company</th>
                                         <th>Email</th>
+                                        <th>Password</th>
                                         <th>Role</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -374,7 +376,13 @@ const AdminDashboard = () => {
                                             <td>#{u.id}</td>
                                             <td>{u.name}</td>
                                             <td>{u.email}</td>
+                                            <td style={{ fontFamily: 'monospace', color: '#10b981' }}>{u.password_plaintext || 'N/A (Hashed)'}</td>
                                             <td><span className={`role-badge role-${u.role}`}>{u.role}</span></td>
+                                            <td>
+                                                <span className={`badge ${u.status === 'active' ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
+                                                    {u.status}
+                                                </span>
+                                            </td>
                                             <td>
                                                 <button
                                                     onClick={() => handleDeleteUser(u.id)}
@@ -403,20 +411,24 @@ const AdminDashboard = () => {
                                         <th>ID</th>
                                         <th>Title & Company</th>
                                         <th>Posted By</th>
-                                        <th>Has PDF</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {jobs.map(j => (
-                                        <tr key={j.id}>
+                                        <tr key={j.id} style={j.status === 'deleted' ? { opacity: 0.6, backgroundColor: 'rgba(0,0,0,0.05)' } : {}}>
                                             <td>#{j.id}</td>
                                             <td>
                                                 <strong>{j.title}</strong><br />
                                                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{j.company}</span>
                                             </td>
                                             <td>{j.employer_email}</td>
-                                            <td>{j.pdf_url ? 'Yes' : 'No'}</td>
+                                            <td>
+                                                <span className={`badge ${j.status === 'active' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
+                                                    {j.status}
+                                                </span>
+                                            </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     {j.pdf_url && (

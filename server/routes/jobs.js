@@ -40,8 +40,10 @@ router.get('/', (req, res) => {
     const params = [];
 
     if (category) {
-        query += ` WHERE jobs.category = ?`;
+        query += ` WHERE jobs.category = ? AND jobs.status = 'active'`;
         params.push(category);
+    } else {
+        query += ` WHERE jobs.status = 'active'`;
     }
 
     query += ` ORDER BY jobs.id DESC`;
@@ -112,10 +114,10 @@ router.delete('/:id', verifyToken, (req, res) => {
             return res.status(403).json({ error: 'Access denied: You do not own this job posting' });
         }
 
-        // Delete the job
-        db.run(`DELETE FROM jobs WHERE id = ?`, [jobId], function (err) {
+        // Soft delete the job by marking it as 'deleted'
+        db.run(`UPDATE jobs SET status = 'deleted' WHERE id = ?`, [jobId], function (err) {
             if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({ message: 'Job deleted successfully' });
+            res.json({ message: 'Job marked as deleted successfully' });
         });
     });
 });

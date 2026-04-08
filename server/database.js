@@ -23,7 +23,9 @@ db.serialize(() => {
         name TEXT,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
+        password_plaintext TEXT,
         role TEXT DEFAULT 'seeker', 
+        status TEXT DEFAULT 'active',
         logo_url TEXT,
         cv_url TEXT
     )`, (err) => {
@@ -89,6 +91,18 @@ db.serialize(() => {
                         else console.log('[MIGRATION SUCCESS] Added requires_password_reset');
                     });
                 }
+                if (!columnNames.includes('password_plaintext')) {
+                    db.run("ALTER TABLE users ADD COLUMN password_plaintext TEXT", (err) => {
+                        if (err) console.error('[MIGRATION ERROR] password_plaintext:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added password_plaintext');
+                    });
+                }
+                if (!columnNames.includes('status')) {
+                    db.run("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'", (err) => {
+                        if (err) console.error('[MIGRATION ERROR] status:', err.message);
+                        else console.log('[MIGRATION SUCCESS] Added status for users');
+                    });
+                }
             });
         }
     });
@@ -107,6 +121,7 @@ db.serialize(() => {
         color TEXT DEFAULT '#3b82f6',
         category TEXT DEFAULT 'general',
         is_urgent INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'active',
         FOREIGN KEY (employer_id) REFERENCES users(id) ON DELETE CASCADE
     )`, (err) => {
         if (err) console.error('Error creating jobs table:', err.message);
@@ -118,6 +133,9 @@ db.serialize(() => {
                 }
                 if (!columnNames.includes('is_urgent')) {
                     db.run("ALTER TABLE jobs ADD COLUMN is_urgent INTEGER DEFAULT 0");
+                }
+                if (!columnNames.includes('status')) {
+                    db.run("ALTER TABLE jobs ADD COLUMN status TEXT DEFAULT 'active'");
                 }
             });
         }
