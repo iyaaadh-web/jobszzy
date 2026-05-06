@@ -1,16 +1,65 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database');
+const multer = require('multer');
+const path = require('path');
 const { verifyToken, isAdmin } = require('../middleware/auth');
+
+// Setup Multer for Admin Logo Updates
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../uploads'));
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'admin-logo-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) cb(null, true);
+        else cb(new Error('Only images allowed'), false);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 // Apply admin protection to all routes in this file
 router.use(verifyToken, isAdmin);
 
 // Get all users
 router.get('/users', (req, res) => {
-    db.all(`SELECT id, name, email, role, password_plaintext, status FROM users`, [], (err, rows) => {
+    db.all(`SELECT id, name, email, role, password_plaintext, status, logo_url FROM users`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows);
+    });
+});
+
+// Update any user (Admin only)
+router.put('/users/:id', upload.single('logo'), (req, res) => {
+    const userId = req.params.id;
+    const { name, email, role, status } = req.body;
+    let logo_url = req.file ? `/uploads/${req.file.filename}` : null;
+
+    console.log(`[ADMIN ACTION] Updating user ${userId}`);
+
+    // If no new logo uploaded, don't change it in the query unless explicitly handled
+    let query = `UPDATE users SET name = ?, email = ?, role = ?, status = ?`;
+    let params = [name, email, role, status];
+
+    if (logo_url) {
+        query += `, logo_url = ?`;
+        params.push(logo_url);
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(userId);
+
+    db.run(query, params, function (err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'User not found' });
+        res.json({ message: 'User updated successfully', logo_url });
     });
 });
 

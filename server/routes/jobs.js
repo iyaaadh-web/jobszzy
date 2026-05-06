@@ -18,10 +18,11 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Only PDF files are allowed!'), false);
+        cb(new Error('Only PDF and Image files (JPG/PNG) are allowed!'), false);
     }
 };
 
@@ -70,13 +71,15 @@ router.get('/:id', (req, res) => {
     );
 });
 
-// POST a new job (Protected: Employer/Admin only, Handles PDF upload)
-router.post('/', verifyToken, isEmployerOrAdmin, upload.single('job_pdf'), (req, res) => {
-    const { title, company, location, type, salary, description, color, category, is_urgent } = req.body;
+// POST a new job (Protected: Employer/Admin only, Handles PDF/Image upload)
+router.post('/', verifyToken, isEmployerOrAdmin, upload.fields([{ name: 'job_pdf', maxCount: 1 }, { name: 'job_poster', maxCount: 1 }]), (req, res) => {
+    const { title, company, location, type, salary, description, color, category, is_urgent, deadline } = req.body;
     const employer_id = req.user.id;
 
-    // Create a URL path for the file if it was uploaded
-    const pdf_url = req.file ? `/uploads/${req.file.filename}` : null;
+    // Handle files
+    const pdf_url = req.files['job_pdf'] ? `/uploads/${req.files['job_pdf'][0].filename}` : null;
+    const poster_url = req.files['job_poster'] ? `/uploads/${req.files['job_poster'][0].filename}` : null;
+    
     const posted_time = 'Just now'; // Simplified for prototype
     const jobColor = color || '#3b82f6';
     const jobCategory = category || 'general';
@@ -87,15 +90,19 @@ router.post('/', verifyToken, isEmployerOrAdmin, upload.single('job_pdf'), (req,
     }
 
     db.run(
-        `INSERT INTO jobs (title, company, location, type, salary, description, employer_id, pdf_url, posted_time, color, category, is_urgent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [title, company, location, type, salary, description, employer_id, pdf_url, posted_time, jobColor, jobCategory, urgentStatus],
+        `INSERT INTO jobs (title, company, location, type, salary, description, employer_id, pdf_url, poster_url, posted_time, color, category, is_urgent, deadline)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [title, company, location, type, salary, description, employer_id, pdf_url, poster_url, posted_time, jobColor, jobCategory, urgentStatus, deadline],
         function (err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
+            if (err) {
+                console.error('Error inserting job:', err.message);
+                return res.status(500).json({ error: 'Database error' });
+            }
             res.status(201).json({
                 message: 'Job posted successfully',
                 id: this.lastID,
-                pdf_url
+                pdf_url,
+                poster_url
             });
         }
     );

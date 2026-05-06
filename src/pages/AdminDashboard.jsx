@@ -19,6 +19,9 @@ const AdminDashboard = () => {
     const [saving, setSaving] = useState(false);
     const [approving, setApproving] = useState(null);
     const [reviewing, setReviewing] = useState(null);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editFormData, setEditFormData] = useState({ name: '', email: '', role: '', status: '' });
+    const [editLogo, setEditLogo] = useState(null);
 
     useEffect(() => {
         if (authLoading) return;
@@ -52,6 +55,44 @@ const AdminDashboard = () => {
 
         fetchData();
     }, [user, navigate]);
+
+    const handleEditUser = (user) => {
+        setEditingUser(user.id);
+        setEditFormData({
+            name: user.name || '',
+            email: user.email || '',
+            role: user.role || 'seeker',
+            status: user.status || 'active'
+        });
+        setEditLogo(null);
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const formData = new FormData();
+            formData.append('name', editFormData.name);
+            formData.append('email', editFormData.email);
+            formData.append('role', editFormData.role);
+            formData.append('status', editFormData.status);
+            if (editLogo) {
+                formData.append('logo', editLogo);
+            }
+
+            const res = await api.put(`/admin/users/${editingUser}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setUsers(users.map(u => u.id === editingUser ? { ...u, ...editFormData, logo_url: res.data.logo_url || u.logo_url } : u));
+            setEditingUser(null);
+            alert('User updated successfully!');
+        } catch (err) {
+            alert('Failed to update user');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleDeleteUser = async (userId) => {
         if (userId === user.id) {
@@ -384,14 +425,24 @@ const AdminDashboard = () => {
                                                 </span>
                                             </td>
                                             <td>
-                                                <button
-                                                    onClick={() => handleDeleteUser(u.id)}
-                                                    className="btn-delete"
-                                                    disabled={u.id === user.id}
-                                                    title={u.id === user.id ? "Cannot delete self" : "Delete User"}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button
+                                                        onClick={() => handleEditUser(u)}
+                                                        className="btn-secondary"
+                                                        style={{ padding: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        title="Edit User"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(u.id)}
+                                                        className="btn-delete"
+                                                        disabled={u.id === user.id}
+                                                        title={u.id === user.id ? "Cannot delete self" : "Delete User"}
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -585,6 +636,56 @@ const AdminDashboard = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit User Modal */}
+            {editingUser && (
+                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="glass" style={{ width: '90%', maxWidth: '500px', padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
+                        <h3>Edit User Profile</h3>
+                        <form onSubmit={handleUpdateUser} style={{ marginTop: '1.5rem' }}>
+                            <div className="form-group">
+                                <label>Name / Company</label>
+                                <input type="text" value={editFormData.name} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Email Address</label>
+                                <input type="email" value={editFormData.email} onChange={e => setEditFormData({ ...editFormData, email: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Password (Plaintext)</label>
+                                <input type="text" value={editFormData.password_plaintext || 'N/A'} readOnly style={{ background: 'rgba(255,255,255,0.02)', color: '#10b981', fontFamily: 'monospace' }} />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group flex-1">
+                                    <label>Role</label>
+                                    <select value={editFormData.role} onChange={e => setEditFormData({ ...editFormData, role: e.target.value })} className="form-select">
+                                        <option value="seeker">Job Seeker</option>
+                                        <option value="employer">Employer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div className="form-group flex-1">
+                                    <label>Status</label>
+                                    <select value={editFormData.status} onChange={e => setEditFormData({ ...editFormData, status: e.target.value })} className="form-select">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="deleted">Deleted</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Profile Picture / Logo</label>
+                                <input type="file" accept="image/*" onChange={e => setEditLogo(e.target.files[0])} style={{ background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: 'var(--radius-md)', width: '100%' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                                <button type="submit" className="btn-primary flex-1" disabled={saving}>{saving ? 'Saving...' : 'Update User'}</button>
+                                <button type="button" className="btn-secondary flex-1" onClick={() => setEditingUser(null)}>Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

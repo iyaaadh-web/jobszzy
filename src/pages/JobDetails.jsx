@@ -110,6 +110,14 @@ const JobDetails = () => {
                         <span className="meta-label">Posted</span>
                         <span className="meta-value">{job.posted_time}</span>
                     </div>
+                    {job.deadline && (
+                        <div className="meta-item">
+                            <span className="meta-label" style={{ color: '#f87171' }}>Deadline</span>
+                            <span className="meta-value" style={{ color: '#f87171', fontWeight: '600' }}>
+                                {new Date(job.deadline).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -128,12 +136,35 @@ const JobDetails = () => {
                             <div className="attachment-card">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 <div className="attachment-info">
-                                    <p className="attachment-name">Company_Profile_or_Job_Spec.pdf</p>
-                                    <a href={job.pdf_url} target="_blank" rel="noopener noreferrer" className="btn-secondary view-pdf-btn">
+                                    <p className="attachment-name">Job_Specification.pdf</p>
+                                    <a href={`${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${job.pdf_url}`} target="_blank" rel="noopener noreferrer" className="btn-secondary view-pdf-btn">
                                         View PDF
                                     </a>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {job.poster_url && (
+                        <div className="job-poster-section" style={{ marginTop: '2rem' }}>
+                            <h3>Job Poster</h3>
+                            {job.poster_url.toLowerCase().endsWith('.pdf') ? (
+                                <div className="attachment-card">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                    <div className="attachment-info">
+                                        <p className="attachment-name">Job_Poster.pdf</p>
+                                        <a href={`${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${job.poster_url}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">View Poster PDF</a>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="poster-image-container" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--card-border)' }}>
+                                    <img 
+                                        src={`${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''}${job.poster_url}`} 
+                                        alt="Job Poster" 
+                                        style={{ width: '100%', display: 'block' }} 
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

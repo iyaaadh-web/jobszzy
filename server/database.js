@@ -137,6 +137,12 @@ db.serialize(() => {
                 if (!columnNames.includes('status')) {
                     db.run("ALTER TABLE jobs ADD COLUMN status TEXT DEFAULT 'active'");
                 }
+                if (!columnNames.includes('deadline')) {
+                    db.run("ALTER TABLE jobs ADD COLUMN deadline TEXT");
+                }
+                if (!columnNames.includes('poster_url')) {
+                    db.run("ALTER TABLE jobs ADD COLUMN poster_url TEXT");
+                }
             });
         }
     });

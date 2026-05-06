@@ -20,6 +20,8 @@ const EmployerDashboard = () => {
     const [currency, setCurrency] = useState('MVR');
     const [description, setDescription] = useState('');
     const [pdfFile, setPdfFile] = useState(null);
+    const [deadline, setDeadline] = useState('');
+    const [jobPoster, setJobPoster] = useState(null);
     const [posting, setPosting] = useState(false);
     const [message, setMessage] = useState('');
     const [selectedJob, setSelectedJob] = useState(null);
@@ -91,6 +93,14 @@ const EmployerDashboard = () => {
                 formData.append('job_pdf', pdfFile);
             }
 
+            if (jobPoster) {
+                formData.append('job_poster', jobPoster);
+            }
+
+            if (deadline) {
+                formData.append('deadline', deadline);
+            }
+
             await api.post('/jobs', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -105,7 +115,10 @@ const EmployerDashboard = () => {
             setSalary('');
             setDescription('');
             setPdfFile(null);
+            setJobPoster(null);
+            setDeadline('');
             document.getElementById('job_pdf').value = '';
+            if (document.getElementById('job_poster')) document.getElementById('job_poster').value = '';
 
             // Refresh jobs list
             const res = await api.get('/jobs');
@@ -415,16 +428,39 @@ const EmployerDashboard = () => {
                             ></textarea>
                         </div>
 
-                        <div className="form-group document-upload">
-                            <label>Attach PDF (Job Spec or Company Profile)</label>
-                            <div className="file-input-wrapper">
-                                <input
-                                    type="file"
-                                    id="job_pdf"
-                                    accept="application/pdf"
-                                    onChange={handleFileChange}
-                                />
+                        <div className="form-group document-upload" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                            <div>
+                                <label>Attach PDF (Job Spec)</label>
+                                <div className="file-input-wrapper">
+                                    <input
+                                        type="file"
+                                        id="job_pdf"
+                                        accept="application/pdf"
+                                        onChange={e => setPdfFile(e.target.files[0])}
+                                    />
+                                </div>
                             </div>
+                            <div>
+                                <label>Attach Job Poster (JPG/PNG)</label>
+                                <div className="file-input-wrapper">
+                                    <input
+                                        type="file"
+                                        id="job_poster"
+                                        accept="image/*"
+                                        onChange={e => setJobPoster(e.target.files[0])}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="form-group" style={{ maxWidth: '300px' }}>
+                            <label>Application Deadline</label>
+                            <input
+                                type="date"
+                                value={deadline}
+                                onChange={e => setDeadline(e.target.value)}
+                                style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'white', border: '1px solid var(--card-border)' }}
+                            />
                         </div>
 
                         <button type="submit" className="btn-primary" disabled={posting}>
